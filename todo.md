@@ -154,3 +154,5 @@
 - [x] Audit and repair the non-working storefront header controls on desktop and mobile.
 - [x] Verify menu, theme, notification, wishlist, account, and cart actions with focused interaction checks.
 - [x] Save a checkpoint after the header controls are repaired.
+- [x] Remove the unnecessary theme toggle from the dark-only storefront header and mobile menu.
+- [x] Restore fixed dark-mode behavior, verify the simplified header, and save a checkpoint.
