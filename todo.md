@@ -144,3 +144,13 @@
 - [x] Remove the promotional offer strip from the storefront header as requested.
 - [x] Verify the simplified header at desktop and mobile sizes and save a checkpoint.
 - [x] Audit the complete TODO history and close every remaining unchecked task before final delivery.
+- [x] Add a light/dark mode toggle to the storefront header while preserving the premium dark default.
+- [x] Add wishlist-aware AI product recommendations to product detail pages using real catalog and wishlist context. (Implemented as zero-cost deterministic smart recommendations using real catalog and wishlist context.)
+- [x] Clearly present real customer reviews, ratings, star distribution, verified-purchase badges, and submission states on product pages without fabricating content.
+- [x] Add focused tests, run TypeScript/build/responsive verification, and save a checkpoint for these enhancements.
+- [x] Keep theme toggle, recommendations, and review enhancements zero-cost by avoiding paid AI calls and premium services.
+- [x] Replace the server recommendation LLM call with deterministic wishlist-aware local ranking if needed.
+- [x] Complete focused tests, TypeScript/build/responsive verification, and save a checkpoint.
+- [x] Audit and repair the non-working storefront header controls on desktop and mobile.
+- [x] Verify menu, theme, notification, wishlist, account, and cart actions with focused interaction checks.
+- [x] Save a checkpoint after the header controls are repaired.

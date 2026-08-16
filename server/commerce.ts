@@ -2,6 +2,7 @@ import { calculateOrderTotals } from "../shared/commerce";
 import { randomBytes } from "node:crypto";
 import { supabase } from "./supabase";
 import { buildWishlistAlerts } from "./wishlistFeatures";
+import { rankWishlistRecommendations } from "./recommendationFeatures";
 import { normalizeReviewFilters } from "./reviewFeatures";
 import { buildAdminAnalytics, filterAnalyticsByDateRange } from "./analyticsFeatures";
 
@@ -315,6 +316,20 @@ export async function getAdminStats() {
     activeInventory: catalog.filter(product => product.is_active).length,
     lowStock: catalog.filter(product => product.is_active && product.stock_quantity < 10).length,
   };
+}
+
+export async function getProductRecommendations(userId: number, productId: string) {
+  const profile = await ensureProfile(userId);
+  const [{ data: current, error: currentError }, { data: wishlistRows, error: wishlistError }, { data: catalog, error: catalogError }] = await Promise.all([
+    supabase.from("products").select("id, price, category_id").eq("id", productId).maybeSingle(),
+    supabase.from("wishlist_items").select("product_id, products(id, price, category_id)").eq("user_id", profile.id).limit(30),
+    supabase.from("products").select("id, name, slug, description, price, original_price, discount_percent, category_id, stock_quantity, images, is_featured, is_active, created_at, categories(name, slug), reviews(rating, moderation_status)").eq("is_active", true).neq("id", productId).limit(100),
+  ]);
+  if (currentError || wishlistError || catalogError) throw new Error(currentError?.message ?? wishlistError?.message ?? catalogError?.message);
+  if (!current) return [];
+  const wishlistProducts = (wishlistRows ?? []).map((row: any) => Array.isArray(row.products) ? row.products[0] : row.products).filter(Boolean);
+  const ranked = rankWishlistRecommendations(current, wishlistProducts, catalog ?? [], 4);
+  return ranked.map((row: any) => toProduct({ ...row, categories: Array.isArray(row.categories) ? row.categories[0] : row.categories } as CatalogRow));
 }
 
 export async function getAdminAnalytics(input: { from?: string; to?: string } = {}) {

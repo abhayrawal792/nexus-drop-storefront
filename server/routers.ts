@@ -3,7 +3,7 @@ import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { adminProcedure, protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import { systemRouter } from "./_core/systemRouter";
-import { addWishlist, createOrder, createReview, createWishlistShare, getAdminAnalytics, getAdminStats, getPaymentProofUrl, getProduct, getSharedWishlist, getUserOrders, listAdminOrders, listAdminProducts, listAdminReviews, listCategories, listCoupons, listProducts, listReviews, listWishlist, listWishlistAlerts, listWishlistShares, markWishlistAlertRead, moderateReview, removeWishlist, revokeWishlistShare, saveCoupon, saveProduct, updateWishlistShare, updateOrder, uploadPaymentProof, uploadProductImage, validateCoupon } from "./commerce";
+import { addWishlist, createOrder, createReview, createWishlistShare, getAdminAnalytics, getAdminStats, getPaymentProofUrl, getProduct, getProductRecommendations, getSharedWishlist, getUserOrders, listAdminOrders, listAdminProducts, listAdminReviews, listCategories, listCoupons, listProducts, listReviews, listWishlist, listWishlistAlerts, listWishlistShares, markWishlistAlertRead, moderateReview, removeWishlist, revokeWishlistShare, saveCoupon, saveProduct, updateWishlistShare, updateOrder, uploadPaymentProof, uploadProductImage, validateCoupon } from "./commerce";
 
 const itemSchema = z.object({ productId: z.string().uuid(), quantity: z.number().int().min(1).max(10) });
 const orderSchema = z.object({
@@ -31,6 +31,7 @@ export const appRouter = router({
     categories: publicProcedure.query(() => listCategories()),
     catalog: publicProcedure.input(z.object({ category: z.string().optional(), search: z.string().optional(), minPrice: z.number().min(0).optional(), maxPrice: z.number().min(0).optional(), sort: z.enum(["newest", "price-low", "price-high"]).optional() })).query(({ input }) => listProducts(input)),
     product: publicProcedure.input(z.object({ slug: z.string().min(1) })).query(({ input }) => getProduct(input.slug)),
+    recommendations: protectedProcedure.input(z.object({ productId: z.string().uuid() })).query(({ input, ctx }) => getProductRecommendations(ctx.user.id, input.productId)),
     reviews: publicProcedure.input(z.object({ productId: z.string().uuid() })).query(({ input }) => listReviews(input.productId)),
     wishlist: protectedProcedure.query(({ ctx }) => listWishlist(ctx.user.id)),
     addWishlist: protectedProcedure.input(z.object({ productId: z.string().uuid() })).mutation(({ input, ctx }) => addWishlist(ctx.user.id, input.productId)),
