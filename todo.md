@@ -172,3 +172,7 @@
 - [x] Make activity-log product names link directly to the catalog editor view.
 - [x] Add Quick Add to Cart actions to wishlist-aware product recommendations.
 - [x] Add focused tests, run authorization/TypeScript/build/responsive verification, and save a checkpoint.
+- [x] Add paginated protected activity-log results and a Clear filters button.
+- [x] Add recommendation quantity controls beside Quick Add to Cart buttons.
+- [x] Confirm successful recommendation adds show a visual toast notification.
+- [x] Add focused tests, run authorization/TypeScript/build/responsive verification, and save a checkpoint.

@@ -363,12 +363,17 @@ export async function recordProductActivity(input: { adminUserId: number; adminN
   return { success: true };
 }
 
-export async function listProductActivity(input: { userId: number; limit?: number; administrator?: string; action?: "created" | "updated"; from?: string; to?: string }) {
+export async function listProductActivity(input: { userId: number; limit?: number; page?: number; pageSize?: number; administrator?: string; action?: "created" | "updated"; from?: string; to?: string }) {
   await ensureProfile(input.userId);
   const { data, error } = await supabase.from("product_activity_log").select("id, action, product_id, product_name, changes, created_at, profiles(full_name), products(name, slug)").order("created_at", { ascending: false }).limit(100);
   if (error) throw new Error(error.message);
   const entries = (data ?? []).map((entry: any) => ({ id: entry.id, action: entry.action, productId: entry.product_id, productName: entry.product_name, changes: entry.changes ?? {}, createdAt: new Date(entry.created_at), adminName: entry.profiles?.full_name ?? "Admin", productSlug: entry.products?.slug ?? null })) as ProductActivityEntry[];
-  return filterProductActivity(entries, input);
+  const filtered = filterProductActivity(entries, { ...input, limit: 50 });
+  const pageSize = Math.min(Math.max(input.pageSize ?? 10, 1), 25);
+  const total = filtered.length;
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const page = Math.min(Math.max(input.page ?? 1, 1), totalPages);
+  return { items: filtered.slice((page - 1) * pageSize, page * pageSize), page, pageSize, total, totalPages };
 }
 
 export async function saveProduct(input: { id?: string; name: string; slug: string; description: string; price: number; originalPrice?: number | null; categoryId: string; stockQuantity: number; images: string[]; isFeatured: boolean; isActive: boolean; adminUserId?: number; adminName?: string | null }) {
