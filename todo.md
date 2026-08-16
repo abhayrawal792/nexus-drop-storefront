@@ -3,14 +3,14 @@
 - [x] Configure the dark-mode Nexus Drop visual system, Inter typography, and supplied brand logo.
 - [x] Create the MySQL/Drizzle commerce schema for profiles, categories, products, reviews, coupons, orders, and order items.
 - [x] Apply the commerce schema migration and seed the exact five requested products, categories, and NEXUS30 coupon.
-- [ ] Create public product, category, review, checkout, and coupon server procedures with admin-only management procedures.
+- [x] Create public product, category, review, checkout, and coupon server procedures with admin-only management procedures.
 - [x] Build the announcement bar, branded navigation, search, category selection, cart drawer trigger, and account entry point.
 - [x] Build the responsive homepage hero, exact trust badges, product filtering, sorting, discount tags, ratings, and add-to-cart actions.
 - [x] Build the product detail route with image gallery, stock display, dynamic pricing, rating summary, and authenticated review submission.
 - [x] Implement persisted cart behavior, delivery calculation of Rs. 150 or free above Rs. 3000, and NEXUS30 coupon discount logic.
 - [ ] Build checkout fields, COD/eSewa/Khalti/FonePay payment selection, eSewa receipt upload, and order confirmation tracking.
 - [x] Build the authenticated account page with order history and live delivery status badges.
-- [ ] Build a role-gated admin dashboard with revenue metrics, product management, order status/payment proof controls, and coupon management.
+- [x] Build a role-gated admin dashboard with revenue metrics, product management, order status/payment proof controls, and coupon management.
 - [x] Add the exact floating WhatsApp support destination and contact/policy footer.
 - [ ] Add automated tests for the commerce calculation and server logic.
 - [ ] Verify desktop and mobile layouts, test key interactions, and address any runtime or visual issues.
@@ -38,4 +38,4 @@
 - [ ] Verify end-to-end navigation coverage across Home, Shop, category collection, product detail, Cart, Checkout, Account, confirmation, and policy routes on desktop and mobile.
 - [ ] Confirm every public route has a visible desktop and mobile entry point through the in-app navigation and customer flow.
 - [ ] Add server-logic coverage for catalog/category filtering, coupon validation, checkout, review submission, and implemented admin procedures.
-- [ ] Stabilize the managed preview and save a verified checkpoint so the customer storefront is reviewable in the project panel.
+- [x] Stabilize the managed preview and save a verified checkpoint so the customer storefront is reviewable in the project panel.
