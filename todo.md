@@ -180,3 +180,7 @@
 - [x] Add filtered CSV export to the protected admin activity log.
 - [x] Add low-stock warning badges to recommended products using a defined stock threshold.
 - [x] Add focused tests, run authorization/TypeScript/build/responsive verification, and save a checkpoint.
+- [x] Add a subtle highlight animation to the newly added mini-cart item.
+- [x] Add activity-log date-range filtering and apply it to CSV export.
+- [x] Show gray Out of Stock badges and disable recommendation add actions at zero inventory.
+- [x] Add focused tests, run TypeScript/build/responsive verification, and save a checkpoint.
