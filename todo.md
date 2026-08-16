@@ -162,3 +162,5 @@
 - [x] Implement a complete light theme and re-enable the theme toggle across all pages.
 - [x] Verify zero-cost wishlist-aware recommendations on product detail pages.
 - [x] Add focused route/theme/recommendation tests, run TypeScript/build/responsive verification, and save a checkpoint.
+- [x] Audit and enforce admin-only access for the /admin route and all admin procedures.
+- [x] Add focused unauthorized/authorized access tests, verify the guard, and save a checkpoint.

@@ -1,7 +1,9 @@
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/NotFound";
-import { Route, Switch } from "wouter";
+import { startLogin } from "@/const";
+import { useAuth } from "./_core/hooks/useAuth";
+import { Link, Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import StoreShell from "./components/storefront/StoreShell";
 import { CartProvider } from "./contexts/CartContext";
@@ -43,7 +45,15 @@ function StorefrontRoutes() {
 }
 
 function AdminRoute() {
+  const { user, loading } = useAuth();
+  if (loading) return <div className="grid min-h-screen place-items-center bg-[#0A0A0A] text-sm font-bold text-cyan-300">Checking admin access…</div>;
+  if (!user) return <AccessDenied title="Admin sign-in required" copy="This workspace is private. Sign in with an authorized admin account to continue." action={<button type="button" onClick={() => startLogin()} className="rounded-xl bg-cyan-400 px-5 py-3 text-sm font-black text-[#061014]">Sign in</button>} />;
+  if (user.role !== "admin") return <AccessDenied title="Access restricted" copy="Your account does not have permission to open the Nexus Drop operations workspace." action={<Link href="/" className="rounded-xl bg-cyan-400 px-5 py-3 text-sm font-black text-[#061014]">Return to storefront</Link>} />;
   return <Suspense fallback={<div className="grid min-h-screen place-items-center bg-[#0A0A0A] text-sm font-bold text-cyan-300">Loading operations workspace…</div>}><Admin /></Suspense>;
+}
+
+function AccessDenied({ title, copy, action }: { title: string; copy: string; action: React.ReactNode }) {
+  return <main className="grid min-h-screen place-items-center bg-[#0A0A0A] px-6 text-center text-white"><div className="max-w-md"><p className="text-xs font-black uppercase tracking-[.18em] text-cyan-300">Nexus Drop operations</p><h1 className="mt-3 text-3xl font-black">{title}</h1><p className="mt-3 text-sm leading-6 text-slate-400">{copy}</p><div className="mt-6">{action}</div></div></main>;
 }
 
 function Router() {
