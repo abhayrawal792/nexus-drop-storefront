@@ -7,7 +7,6 @@ import StoreShell from "./components/storefront/StoreShell";
 import { CartProvider } from "./contexts/CartContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Account from "./pages/Account";
-import Admin from "./pages/Admin";
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
 import Home from "./pages/Home";
@@ -15,6 +14,9 @@ import OrderConfirmation from "./pages/OrderConfirmation";
 import Policy from "./pages/Policy";
 import ProductDetail from "./pages/ProductDetail";
 import Shop from "./pages/Shop";
+import { lazy, Suspense } from "react";
+
+const Admin = lazy(() => import("./pages/Admin"));
 
 function StorefrontRoutes() {
   return <StoreShell><Switch>
@@ -32,8 +34,12 @@ function StorefrontRoutes() {
   </Switch></StoreShell>;
 }
 
+function AdminRoute() {
+  return <Suspense fallback={<div className="grid min-h-screen place-items-center bg-[#0A0A0A] text-sm font-bold text-cyan-300">Loading operations workspace…</div>}><Admin /></Suspense>;
+}
+
 function Router() {
-  return <Switch><Route path="/admin" component={Admin} /><Route component={StorefrontRoutes} /></Switch>;
+  return <Switch><Route path="/admin" component={AdminRoute} /><Route component={StorefrontRoutes} /></Switch>;
 }
 
 function App() {
