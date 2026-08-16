@@ -56,3 +56,9 @@
 - [x] Add a Buy Now action beside Add to Cart on product cards and product-detail pages, taking the shopper directly to checkout with the selected item.
 - [x] Replace separate category menu buttons with Home, Products, and a grouped Categories menu containing Jewelry, Watches, Eyewear, and Bags.
 - [x] Change promotional copy from exact “30% Off” to “Up to 30% Off” across the announcement strip and related storefront copy.
+- [x] Remove the redundant Categories item from the primary menu and add a Contact / Inquiry menu entry linked to WhatsApp and contact details, while keeping category filters inside Products.
+- [x] Add a dedicated Contact / Inquiry destination with WhatsApp, phone, and email details.
+- [x] Point the primary Contact / Inquiry menu entry to the dedicated contact destination and retain direct WhatsApp access.
+- [x] Re-test desktop and mobile navigation for the Products filters and Contact / Inquiry destination.
+- [x] Re-test the updated mobile menu at phone viewport after the Contact / Inquiry page addition, including Home, Products, and Contact / Inquiry navigation.
+- [x] Verify on mobile that Products exposes Jewelry, Watches, Eyewear, and Bags filters and Contact / Inquiry opens the dedicated page with WhatsApp, phone, and email details.

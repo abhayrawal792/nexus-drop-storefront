@@ -8,6 +8,7 @@ import { CartProvider } from "./contexts/CartContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Account from "./pages/Account";
 import Cart from "./pages/Cart";
+import Contact from "./pages/Contact";
 import Checkout from "./pages/Checkout";
 import Home from "./pages/Home";
 import OrderConfirmation from "./pages/OrderConfirmation";
@@ -25,6 +26,7 @@ function StorefrontRoutes() {
     <Route path="/collections/:category" component={Shop} />
     <Route path="/products/:slug" component={ProductDetail} />
     <Route path="/cart" component={Cart} />
+    <Route path="/contact" component={Contact} />
     <Route path="/checkout" component={Checkout} />
     <Route path="/account" component={Account} />
     <Route path="/order-confirmation" component={OrderConfirmation} />
