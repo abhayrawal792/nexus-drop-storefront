@@ -8,4 +8,7 @@ describe("review filter normalization", () => {
   it("omits unset filters", () => {
     expect(normalizeReviewFilters()).toEqual({});
   });
+  it("normalizes moderation-history search and date bounds", () => {
+    expect(normalizeReviewFilters({ search: "  sling bag ", from: "2026-08-01", to: "2026-08-16" })).toEqual({ search: "sling bag", from: "2026-08-01", to: "2026-08-16" });
+  });
 });

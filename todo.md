@@ -113,3 +113,8 @@
 - [x] Trigger wishlist low-stock alerts when createOrder reduces stock across the low-stock threshold.
 - [x] Add tests for share-token creation/public shared-wishlist access and moderation-history insertion.
 - [x] Save a checkpoint after the completed wishlist alert, shared wishlist, and review-history verification.
+
+- [x] Add a signed-in notification bell with an unread wishlist-alert dropdown and mark-read actions.
+- [x] Add shared-wishlist link management with expiration dates, revoke actions, and clear active/revoked states.
+- [x] Add admin moderation-history search and start/end date filters using real history records.
+- [x] Add unit coverage, run migration/type/responsive checks, and save a checkpoint.

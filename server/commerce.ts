@@ -130,14 +130,29 @@ export async function removeWishlist(userId: number, productId: string) {
   return { success: true };
 }
 
-export async function listAdminReviews(input: { status?: "pending" | "approved" | "rejected"; verified?: boolean } = {}) {
+export async function listAdminReviews(input: { status?: "pending" | "approved" | "rejected"; verified?: boolean; search?: string; from?: string; to?: string } = {}) {
   const filters = normalizeReviewFilters(input);
   let query = supabase.from("reviews").select("id, product_id, rating, comment, created_at, moderation_status, verified_purchase, profiles(full_name), products(name, slug), review_moderation_history(id, from_status, to_status, note, created_at, profiles(full_name))").order("created_at", { ascending: false });
   if (filters.status) query = query.eq("moderation_status", filters.status);
   if (filters.verified !== undefined) query = query.eq("verified_purchase", filters.verified);
+  if (filters.from) query = query.gte("created_at", filters.from);
+  if (filters.to) query = query.lte("created_at", `${filters.to}T23:59:59.999Z`);
   const { data, error } = await query;
   if (error) throw new Error(error.message);
-  return data ?? [];
+  const fromMs = filters.from ? new Date(filters.from).getTime() : undefined;
+  const toMs = filters.to ? new Date(`${filters.to}T23:59:59.999Z`).getTime() : undefined;
+  const search = filters.search?.toLowerCase();
+  return (data ?? []).flatMap((review: any) => {
+    const history = (review.review_moderation_history ?? []).filter((entry: any) => {
+      const time = new Date(entry.created_at).getTime();
+      const dateMatch = (fromMs === undefined || time >= fromMs) && (toMs === undefined || time <= toMs);
+      const historyText = [entry.note, entry.from_status, entry.to_status, entry.profiles?.full_name].filter(Boolean).join(" ").toLowerCase();
+      const reviewText = [review.comment, review.products?.name, review.profiles?.full_name].filter(Boolean).join(" ").toLowerCase();
+      return dateMatch && (!search || historyText.includes(search) || reviewText.includes(search));
+    });
+    if ((filters.from || filters.to || search) && history.length === 0) return [];
+    return [{ ...review, review_moderation_history: history }];
+  });
 }
 
 export async function moderateReview(input: { reviewId: string; status: "pending" | "approved" | "rejected"; adminUserId: number; adminName?: string | null; note?: string | null }) {
@@ -165,18 +180,43 @@ export async function markWishlistAlertRead(userId: number, alertId: string, use
   return { success: true };
 }
 
-export async function createWishlistShare(userId: number, userName?: string | null) {
+export async function createWishlistShare(userId: number, userName?: string | null, expiresAt?: string | null) {
   const profile = await ensureProfile(userId, userName);
   const token = randomBytes(18).toString("base64url");
-  const { data, error } = await supabase.from("wishlist_shares").insert({ user_id: profile.id, token }).select("token").single();
+  const { data, error } = await supabase.from("wishlist_shares").insert({ user_id: profile.id, token, expires_at: expiresAt ?? null }).select("token, expires_at").single();
   if (error || !data) throw new Error(error?.message ?? "Unable to create wishlist link.");
-  return { token: data.token };
+  return { token: data.token, expiresAt: data.expires_at };
+}
+
+export async function listWishlistShares(userId: number, userName?: string | null) {
+  const profile = await ensureProfile(userId, userName);
+  const { data, error } = await supabase.from("wishlist_shares").select("id, token, is_active, expires_at, revoked_at, created_at").eq("user_id", profile.id).order("created_at", { ascending: false }).limit(25);
+  if (error) throw new Error(error.message);
+  return data ?? [];
+}
+
+export async function updateWishlistShare(userId: number, shareId: string, expiresAt: string | null, userName?: string | null) {
+  const profile = await ensureProfile(userId, userName);
+  const { error } = await supabase.from("wishlist_shares").update({ expires_at: expiresAt }).eq("id", shareId).eq("user_id", profile.id).eq("is_active", true);
+  if (error) throw new Error(error.message);
+  return { success: true };
+}
+
+export async function revokeWishlistShare(userId: number, shareId: string, userName?: string | null) {
+  const profile = await ensureProfile(userId, userName);
+  const { error } = await supabase.from("wishlist_shares").update({ is_active: false, revoked_at: new Date().toISOString() }).eq("id", shareId).eq("user_id", profile.id);
+  if (error) throw new Error(error.message);
+  return { success: true };
+}
+
+export function isWishlistShareAccessible(share: { revoked_at?: string | null; expires_at?: string | null } | null, now = Date.now()) {
+  return Boolean(share && !share.revoked_at && (!share.expires_at || new Date(share.expires_at).getTime() > now));
 }
 
 export async function getSharedWishlist(token: string) {
-  const { data: share, error: shareError } = await supabase.from("wishlist_shares").select("user_id").eq("token", token).eq("is_active", true).maybeSingle();
+  const { data: share, error: shareError } = await supabase.from("wishlist_shares").select("user_id, expires_at, revoked_at").eq("token", token).eq("is_active", true).maybeSingle();
   if (shareError) throw new Error(shareError.message);
-  if (!share) return null;
+  if (!share || !isWishlistShareAccessible(share)) return null;
   const { data, error } = await supabase.from("wishlist_items").select("created_at, products(id, name, slug, description, price, original_price, discount_percent, stock_quantity, images, is_featured, is_active, created_at, categories(name, slug), reviews(rating, moderation_status))").eq("user_id", share.user_id).order("created_at", { ascending: false });
   if (error) throw new Error(error.message);
   return (data ?? []).flatMap((row: any) => row.products ? [{ addedAt: new Date(row.created_at), ...toProduct(row.products as CatalogRow) }] : []);

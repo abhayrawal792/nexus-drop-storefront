@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 const { mockFrom } = vi.hoisted(() => ({ mockFrom: vi.fn() }));
 vi.mock("./supabase", () => ({ supabase: { from: mockFrom } }));
 
-import { createWishlistShare, getSharedWishlist, moderateReview } from "./commerce";
+import { createWishlistShare, getSharedWishlist, isWishlistShareAccessible, moderateReview } from "./commerce";
 
 afterEach(() => mockFrom.mockReset());
 
@@ -21,6 +21,13 @@ describe("wishlist sharing and moderation history", () => {
     await expect(createWishlistShare(7, "Customer")).resolves.toEqual({ token: "share-token-123" });
     await expect(getSharedWishlist("share-token-123")).resolves.toMatchObject([{ name: "Sling Bag" }]);
     expect(shareInsert).toHaveBeenCalledWith(expect.objectContaining({ user_id: "profile-1", token: expect.any(String) }));
+  });
+
+  it("distinguishes active, expired, and revoked share links", () => {
+    const now = Date.parse("2026-08-16T00:00:00Z");
+    expect(isWishlistShareAccessible({ expires_at: "2026-08-17T00:00:00Z" }, now)).toBe(true);
+    expect(isWishlistShareAccessible({ expires_at: "2026-08-15T00:00:00Z" }, now)).toBe(false);
+    expect(isWishlistShareAccessible({ revoked_at: "2026-08-17T00:00:00Z" }, now)).toBe(false);
   });
 
   it("writes a moderation-history row when an admin changes status", async () => {
