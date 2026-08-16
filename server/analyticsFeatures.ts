@@ -1,6 +1,12 @@
 export type AnalyticsOrder = { created_at: string; order_status: string };
 export type AnalyticsWishlistSave = { created_at: string };
 
+export function filterAnalyticsByDateRange<T extends { created_at: string }>(rows: T[], from?: string, to?: string) {
+  const fromMs = from ? new Date(`${from}T00:00:00.000Z`).getTime() : Number.NEGATIVE_INFINITY;
+  const toMs = to ? new Date(`${to}T23:59:59.999Z`).getTime() : Number.POSITIVE_INFINITY;
+  return rows.filter(row => { const time = new Date(row.created_at).getTime(); return time >= fromMs && time <= toMs; });
+}
+
 function monthKey(dateString: string) {
   const date = new Date(dateString);
   return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}`;

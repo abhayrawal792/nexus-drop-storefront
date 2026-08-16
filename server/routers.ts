@@ -50,7 +50,7 @@ export const appRouter = router({
   }),
   admin: router({
     stats: adminProcedure.query(() => getAdminStats()),
-    analytics: adminProcedure.query(() => getAdminAnalytics()),
+    analytics: adminProcedure.input(z.object({ from: z.string().date().optional(), to: z.string().date().optional() }).optional()).query(({ input }) => getAdminAnalytics(input ?? {})),
     products: adminProcedure.query(() => listAdminProducts()),
     saveProduct: adminProcedure.input(z.object({ id: z.string().uuid().optional(), name: z.string().min(2).max(180), slug: z.string().min(2).max(180), description: z.string().min(10).max(1600), price: z.number().min(0), originalPrice: z.number().min(0).nullable().optional(), categoryId: z.string().uuid(), stockQuantity: z.number().int().min(0), images: z.array(z.string().url()).max(6), isFeatured: z.boolean(), isActive: z.boolean() })).mutation(({ input }) => saveProduct(input)),
     orders: adminProcedure.query(() => listAdminOrders()),

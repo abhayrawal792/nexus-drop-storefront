@@ -124,3 +124,7 @@
 - [x] Add focused tests, run TypeScript and responsive verification, and save a checkpoint for these enhancements.
 - [x] Add loading, success-toast, and error-toast feedback to header notification-bell mark-read actions.
 - [x] Capture fresh desktop and mobile verification for analytics and wishlist enhancements, then save a checkpoint.
+- [x] Add a date range picker to filter admin conversion and wishlist analytics.
+- [x] Add CSV export for analytics charts and summary metrics.
+- [x] Add wishlist sorting by price and date added while preserving filters.
+- [x] Add focused tests, run TypeScript/build/responsive verification, and save a checkpoint for these enhancements.
