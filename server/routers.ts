@@ -3,7 +3,7 @@ import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { adminProcedure, protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import { systemRouter } from "./_core/systemRouter";
-import { createOrder, createReview, getAdminStats, getPaymentProofUrl, getProduct, getUserOrders, listAdminOrders, listAdminProducts, listCategories, listCoupons, listProducts, listReviews, saveCoupon, saveProduct, updateOrder, uploadPaymentProof, uploadProductImage, validateCoupon } from "./commerce";
+import { addWishlist, createOrder, createReview, getAdminStats, getPaymentProofUrl, getProduct, getUserOrders, listAdminOrders, listAdminProducts, listAdminReviews, listCategories, listCoupons, listProducts, listReviews, listWishlist, moderateReview, removeWishlist, saveCoupon, saveProduct, updateOrder, uploadPaymentProof, uploadProductImage, validateCoupon } from "./commerce";
 
 const itemSchema = z.object({ productId: z.string().uuid(), quantity: z.number().int().min(1).max(10) });
 const orderSchema = z.object({
@@ -32,6 +32,9 @@ export const appRouter = router({
     catalog: publicProcedure.input(z.object({ category: z.string().optional(), search: z.string().optional(), minPrice: z.number().min(0).optional(), maxPrice: z.number().min(0).optional(), sort: z.enum(["newest", "price-low", "price-high"]).optional() })).query(({ input }) => listProducts(input)),
     product: publicProcedure.input(z.object({ slug: z.string().min(1) })).query(({ input }) => getProduct(input.slug)),
     reviews: publicProcedure.input(z.object({ productId: z.string().uuid() })).query(({ input }) => listReviews(input.productId)),
+    wishlist: protectedProcedure.query(({ ctx }) => listWishlist(ctx.user.id)),
+    addWishlist: protectedProcedure.input(z.object({ productId: z.string().uuid() })).mutation(({ input, ctx }) => addWishlist(ctx.user.id, input.productId)),
+    removeWishlist: protectedProcedure.input(z.object({ productId: z.string().uuid() })).mutation(({ input, ctx }) => removeWishlist(ctx.user.id, input.productId)),
     coupon: publicProcedure.input(z.object({ code: z.string().max(40), subtotal: z.number().min(0) })).query(({ input }) => validateCoupon(input.code, input.subtotal)),
     uploadReceipt: publicProcedure.input(imageUploadSchema).mutation(async ({ input, ctx }) => uploadPaymentProof({ fileName: input.fileName, ...readImageData(input), userId: ctx.user?.id })),
     checkout: publicProcedure.input(orderSchema).mutation(({ input, ctx }) => createOrder({ ...input, userId: ctx.user?.id, userName: ctx.user?.name })),
@@ -45,6 +48,8 @@ export const appRouter = router({
     orders: adminProcedure.query(() => listAdminOrders()),
     updateOrder: adminProcedure.input(z.object({ id: z.string().uuid(), orderStatus: z.enum(["pending", "confirmed", "shipped", "delivered", "cancelled"]), paymentStatus: z.enum(["pending", "verified", "failed"]) })).mutation(({ input }) => updateOrder(input)),
     paymentProof: adminProcedure.input(z.object({ orderId: z.string().uuid() })).query(({ input }) => getPaymentProofUrl(input.orderId)),
+    reviews: adminProcedure.query(() => listAdminReviews()),
+    moderateReview: adminProcedure.input(z.object({ reviewId: z.string().uuid(), status: z.enum(["pending", "approved", "rejected"]) })).mutation(({ input, ctx }) => moderateReview({ ...input, adminUserId: ctx.user.id, adminName: ctx.user.name })),
     coupons: adminProcedure.query(() => listCoupons()),
     saveCoupon: adminProcedure.input(z.object({ id: z.string().uuid().optional(), code: z.string().min(3).max(40), discountPercent: z.number().int().min(1).max(30), minSpend: z.number().min(0), maxUses: z.number().int().positive().nullable().optional(), isActive: z.boolean(), expiryDate: z.date().nullable().optional() })).mutation(({ input }) => saveCoupon(input)),
     uploadProductImage: adminProcedure.input(imageUploadSchema).mutation(({ input }) => uploadProductImage({ fileName: input.fileName, ...readImageData(input) })),

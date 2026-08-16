@@ -54,10 +54,11 @@ describe("review and checkout server logic", () => {
     mockFrom.mockImplementation((table: string) => {
       if (table === "profiles") return { upsert: () => ({ select: () => ({ single: async () => ({ data: { id: "profile-1", role: "customer" }, error: null }) }) }) };
       if (table === "reviews") return { insert: async () => ({ error: null }) };
+      if (table === "orders") return { select: () => ({ eq: () => ({ in: async () => ({ data: [], error: null }) }) }) };
       throw new Error(`Unexpected table: ${table}`);
     });
 
-    await expect(createReview({ productId: sampleProduct.id, userId: 7, userName: "Customer", rating: 5, comment: "Excellent finishing and easy to wear." })).resolves.toEqual({ success: true });
+    await expect(createReview({ productId: sampleProduct.id, userId: 7, userName: "Customer", rating: 5, comment: "Excellent finishing and easy to wear." })).resolves.toEqual({ success: true, moderationStatus: "pending", verifiedPurchase: false });
   });
 
   it("creates an order with calculated delivery and decreases available stock", async () => {

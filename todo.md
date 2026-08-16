@@ -87,3 +87,20 @@
 - [x] Add interaction-level tests for Products-page search/min-max filtering and quick-view modal Add to Cart / Buy Now actions. (Filter normalization and quick-view purchase-state unit tests added; URL-reproducible states verified in preview.)
 - [x] Exercise search, price filtering, quick view, and product-detail review display on desktop and mobile, then capture evidence.
 - [x] Save a new checkpoint after the discovery and trust enhancements are fully verified.
+
+- [x] Add a persistent authenticated wishlist model, RLS policy, server procedures, and customer wishlist page/actions.
+- [x] Add review moderation fields and admin-only moderation procedures without changing or fabricating review content.
+- [x] Derive verified-purchase status from real completed orders and expose it with each review.
+- [x] Add admin review moderation controls and verified-purchase badges on customer review cards.
+- [x] Add unit coverage, run database/type checks, verify desktop/mobile flows, and save a checkpoint.
+- [x] Capture desktop and mobile QA evidence for wishlist entry points, save/remove behavior, and the product-detail wishlist action.
+- [x] Capture admin review-moderation UI evidence for pending, approved, and rejected controls. (Controls are implemented; empty state verified because no reviews currently exist.)
+- [x] Verify a visible verified-purchase badge using only a real completed-order-backed review, or document the empty state when no such review exists. (No real completed-order review exists yet; badge remains hidden until order-backed verification is true.)
+- [x] Save a new checkpoint after the wishlist and review-moderation enhancements are fully verified.
+- [x] Add a deterministic admin review-tab QA entry point without changing normal admin navigation.
+- [x] Capture the admin review-moderation controls and document the honest no-real-review empty state when no completed-order review exists.
+- [x] Add a development-only wishlist QA entry point that exercises save/remove state without changing the production wishlist behavior.
+- [x] Add a development-only review moderation QA fixture or harness that renders one real-shaped pending review row without inserting customer data into production. (Implemented as a no-customer-data controls preview to avoid fabricating a review.)
+- [x] Exercise the wishlist and moderation controls through deterministic QA states, then save a new checkpoint.
+- [x] Refine the development-only admin QA preview into a clearly labeled pending-row layout with metadata placeholders and row-level moderation controls, without inserting or fabricating customer review content.
+- [x] Save a checkpoint after the refined wishlist and review-moderation QA evidence is captured.

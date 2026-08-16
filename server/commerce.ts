@@ -8,12 +8,13 @@ export type PaymentStatus = "pending" | "verified" | "failed";
 type CatalogRow = {
   id: string; name: string; slug: string; description: string; price: number | string; original_price: number | string | null;
   discount_percent: number; category_id: string; stock_quantity: number; images: string[]; is_featured: boolean; is_active: boolean; created_at: string;
-  categories: { name: string; slug: string } | null; reviews?: Array<{ rating: number }> | null;
+  categories: { name: string; slug: string } | null; reviews?: Array<{ rating: number; moderation_status?: string }> | null;
 };
 
 function toProduct(row: CatalogRow) {
-  const reviewCount = row.reviews?.length ?? 0;
-  const averageRating = reviewCount ? Number((row.reviews!.reduce((sum, review) => sum + review.rating, 0) / reviewCount).toFixed(1)) : null;
+  const approvedReviews = (row.reviews ?? []).filter(review => !review.moderation_status || review.moderation_status === "approved");
+  const reviewCount = approvedReviews.length;
+  const averageRating = reviewCount ? Number((approvedReviews.reduce((sum, review) => sum + review.rating, 0) / reviewCount).toFixed(1)) : null;
   return {
     id: row.id,
     name: row.name,
@@ -57,7 +58,7 @@ export function normalizeCatalogFilters(input: { minPrice?: number; maxPrice?: n
 
 export async function listProducts(input: { category?: string; search?: string; minPrice?: number; maxPrice?: number; sort?: "newest" | "price-low" | "price-high" }) {
   const priceFilters = normalizeCatalogFilters(input);
-  let query = supabase.from("products").select("*, categories(name, slug), reviews(rating)").eq("is_active", true);
+  let query = supabase.from("products").select("*, categories(name, slug), reviews(rating, moderation_status)").eq("is_active", true);
   if (input.category) {
     const { data: category, error: categoryError } = await supabase.from("categories").select("id").eq("slug", input.category).maybeSingle();
     if (categoryError) throw new Error(categoryError.message);
@@ -76,20 +77,65 @@ export async function listProducts(input: { category?: string; search?: string; 
 }
 
 export async function getProduct(slug: string) {
-  const { data, error } = await supabase.from("products").select("*, categories(name, slug)").eq("slug", slug).eq("is_active", true).maybeSingle();
+  const { data, error } = await supabase.from("products").select("*, categories(name, slug), reviews(rating, moderation_status)").eq("slug", slug).eq("is_active", true).maybeSingle();
   if (error) throw new Error(error.message);
   return data ? toProduct(data as CatalogRow) : null;
 }
 
 export async function listReviews(productId: string) {
-  const { data, error } = await supabase.from("reviews").select("id, rating, comment, created_at, profiles(full_name)").eq("product_id", productId).order("created_at", { ascending: false });
+  const { data, error } = await supabase.from("reviews").select("id, rating, comment, created_at, verified_purchase, profiles(full_name)").eq("product_id", productId).eq("moderation_status", "approved").order("created_at", { ascending: false });
   if (error) throw new Error(error.message);
-  return (data ?? []).map((review: any) => ({ id: review.id, rating: review.rating, comment: review.comment, createdAt: new Date(review.created_at), author: review.profiles?.full_name ?? "Verified customer" }));
+  return (data ?? []).map((review: any) => ({ id: review.id, rating: review.rating, comment: review.comment, createdAt: new Date(review.created_at), author: review.profiles?.full_name ?? "Verified customer", verifiedPurchase: Boolean(review.verified_purchase) }));
+}
+
+async function hasCompletedPurchase(profileId: string, productId: string) {
+  const { data: orders, error: orderError } = await supabase.from("orders").select("id").eq("user_id", profileId).in("order_status", ["confirmed", "shipped", "delivered"]);
+  if (orderError) throw new Error(orderError.message);
+  const orderIds = (orders ?? []).map(order => order.id);
+  if (!orderIds.length) return false;
+  const { data: items, error: itemError } = await supabase.from("order_items").select("id").eq("product_id", productId).in("order_id", orderIds).limit(1);
+  if (itemError) throw new Error(itemError.message);
+  return Boolean(items?.length);
 }
 
 export async function createReview(input: { productId: string; userId: number; userName?: string | null; rating: number; comment: string }) {
   const profile = await ensureProfile(input.userId, input.userName);
-  const { error } = await supabase.from("reviews").insert({ product_id: input.productId, user_id: profile.id, rating: input.rating, comment: input.comment });
+  const verifiedPurchase = await hasCompletedPurchase(profile.id, input.productId);
+  const { error } = await supabase.from("reviews").insert({ product_id: input.productId, user_id: profile.id, rating: input.rating, comment: input.comment, verified_purchase: verifiedPurchase, moderation_status: "pending" });
+  if (error) throw new Error(error.message);
+  return { success: true, moderationStatus: "pending", verifiedPurchase };
+}
+
+export async function listWishlist(userId: number) {
+  const profile = await ensureProfile(userId);
+  const { data, error } = await supabase.from("wishlist_items").select("product_id, created_at, products(*, categories(name, slug), reviews(rating, moderation_status))").eq("user_id", profile.id).order("created_at", { ascending: false });
+  if (error) throw new Error(error.message);
+  return (data ?? []).flatMap((row: any) => row.products ? [{ addedAt: new Date(row.created_at), ...toProduct(row.products as CatalogRow) }] : []);
+}
+
+export async function addWishlist(userId: number, productId: string) {
+  const profile = await ensureProfile(userId);
+  const { error } = await supabase.from("wishlist_items").upsert({ user_id: profile.id, product_id: productId }, { onConflict: "user_id,product_id" });
+  if (error) throw new Error(error.message);
+  return { success: true };
+}
+
+export async function removeWishlist(userId: number, productId: string) {
+  const profile = await ensureProfile(userId);
+  const { error } = await supabase.from("wishlist_items").delete().eq("user_id", profile.id).eq("product_id", productId);
+  if (error) throw new Error(error.message);
+  return { success: true };
+}
+
+export async function listAdminReviews() {
+  const { data, error } = await supabase.from("reviews").select("id, product_id, rating, comment, created_at, moderation_status, verified_purchase, profiles(full_name), products(name, slug)").order("created_at", { ascending: false });
+  if (error) throw new Error(error.message);
+  return data ?? [];
+}
+
+export async function moderateReview(input: { reviewId: string; status: "pending" | "approved" | "rejected"; adminUserId: number; adminName?: string | null }) {
+  const profile = await ensureProfile(input.adminUserId, input.adminName);
+  const { error } = await supabase.from("reviews").update({ moderation_status: input.status, moderated_by: profile.id, moderated_at: new Date().toISOString() }).eq("id", input.reviewId);
   if (error) throw new Error(error.message);
   return { success: true };
 }
