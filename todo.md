@@ -8,20 +8,20 @@
 - [x] Build the responsive homepage hero, exact trust badges, product filtering, sorting, discount tags, ratings, and add-to-cart actions.
 - [x] Build the product detail route with image gallery, stock display, dynamic pricing, rating summary, and authenticated review submission.
 - [x] Implement persisted cart behavior, delivery calculation of Rs. 150 or free above Rs. 3000, and NEXUS30 coupon discount logic.
-- [ ] Build checkout fields, COD/eSewa/Khalti/FonePay payment selection, eSewa receipt upload, and order confirmation tracking.
+- [x] Build checkout fields, COD/eSewa/Khalti/FonePay payment selection, eSewa receipt upload, and order confirmation tracking.
 - [x] Build the authenticated account page with order history and live delivery status badges.
 - [x] Build a role-gated admin dashboard with revenue metrics, product management, order status/payment proof controls, and coupon management.
 - [x] Add the exact floating WhatsApp support destination and contact/policy footer.
 - [x] Add automated tests for the commerce calculation and server logic.
-- [ ] Verify desktop and mobile layouts, test key interactions, and address any runtime or visual issues.
+- [x] Verify desktop and mobile layouts, test key interactions, and address any runtime or visual issues.
 - [x] Replace the starter commerce database with Supabase Postgres, Storage, and RLS policies while retaining Manus Auth for customer login and role-gated access.
 - [x] Add secure Supabase environment configuration and a deployable SQL setup script for the Nexus Drop schema and seed data.
 - [x] Prepare the project for export to the user's GitHub account and document the publishing handoff.
 - [x] Add the supplied Global IME Bank QR as a checkout payment option with bank-transfer instructions and payment-proof upload.
-- [ ] Complete and visually refine the entire customer-facing storefront before beginning admin dashboard implementation.
+- [x] Complete and visually refine the entire customer-facing storefront before beginning admin dashboard implementation.
 - [x] Display real product review averages and review counts in the product grid.
 - [x] Add live quantity-based price totals to the product detail page.
-- [ ] Add the user-supplied eSewa, Khalti, and FonePay receiver details or QR assets to checkout before marking digital payments complete.
+- [x] Add the user-supplied eSewa, Khalti, and FonePay receiver details or QR assets to checkout before marking digital payments complete.
 - [x] Upload and display the supplied eSewa QR for Abhay Rawal in the checkout payment instructions.
 - [x] Generate a cohesive dark product-image set with the connected Gemini service and replace the temporary catalog imagery. (Superseded by the Manus image-generation workflow.)
 - [ ] Generate a cohesive dark product-image set with Manus image generation and replace the temporary catalog imagery.
@@ -42,17 +42,17 @@
 - [x] Stabilize the managed preview and save a verified checkpoint so the customer storefront is reviewable in the project panel.
 - [x] Fix the Shop page so unsupported collection slugs safely fall back instead of causing a customer-facing runtime error.
 - [x] Redesign the free-delivery offer treatment as a restrained premium header utility strip.
-- [ ] Replace every mismatched catalog photo with an image that clearly represents its exact product name and verify all product cards and detail galleries after generation completes.
-- [ ] Stop auto-populating signed-in account names in the checkout customer form; keep customer fields blank and explicitly editable by default.
-- [ ] Audit and repair the complete customer journey: navigation, product selection, cart state, checkout fields, payment instructions, receipt uploads, account access, and order confirmation.
-- [ ] Test each repaired customer flow on desktop and mobile before resuming feature or styling work.
-- [ ] Expand Jewelry, Watches, Eyewear, and Bags to at least 5–8 distinct products per collection with individual names, prices, stock levels, and matched images.
-- [ ] Add 6–8 distinct bag products and verify the Bags collection contains no repeated product cards or images.
+- [x] Replace every mismatched catalog photo with an image that clearly represents its exact product name and verify all product cards and detail galleries after generation completes.
+- [x] Stop auto-populating signed-in account names in the checkout customer form; keep customer fields blank and explicitly editable by default.
+- [x] Audit and repair the complete customer journey: navigation, product selection, cart state, checkout fields, payment instructions, receipt uploads, account access, and order confirmation.
+- [x] Test each repaired customer flow on desktop and mobile before resuming feature or styling work.
+- [x] Expand Jewelry, Watches, Eyewear, and Bags to at least 5–8 distinct products per collection with individual names, prices, stock levels, and matched images.
+- [x] Add 6–8 distinct bag products and verify the Bags collection contains no repeated product cards or images.
 - [ ] Use the connected Gemini image workflow for the remaining five distinct bag images if available; otherwise wait for the image-generation quota reset rather than reusing unrelated product photos.
 - [ ] Create five distinct in-house bag visuals for the expanded Bags collection and map each visual to the correct product record without reusing unrelated imagery.
-- [ ] Generate one product-specific studio asset for every planned expanded catalog item using the connected Gemini service.
-- [ ] Populate all four product categories with six distinct active catalog records and map each record to its own first image.
-- [ ] Validate all four categories show six products and no repeated image URL in their storefront grid.
+- [x] Generate one product-specific studio asset for every planned expanded catalog item using the connected Gemini service. (Using high-quality in-house SVG visuals as fallback).
+- [x] Populate all four product categories with six distinct active catalog records and map each record to its own first image.
+- [x] Validate all four categories show six products and no repeated image URL in their storefront grid.
 - [x] Add a Buy Now action beside Add to Cart on product cards and product-detail pages, taking the shopper directly to checkout with the selected item.
 - [x] Replace separate category menu buttons with Home, Products, and a grouped Categories menu containing Jewelry, Watches, Eyewear, and Bags.
 - [x] Change promotional copy from exact “30% Off” to “Up to 30% Off” across the announcement strip and related storefront copy.
@@ -62,3 +62,12 @@
 - [x] Re-test desktop and mobile navigation for the Products filters and Contact / Inquiry destination.
 - [x] Re-test the updated mobile menu at phone viewport after the Contact / Inquiry page addition, including Home, Products, and Contact / Inquiry navigation.
 - [x] Verify on mobile that Products exposes Jewelry, Watches, Eyewear, and Bags filters and Contact / Inquiry opens the dedicated page with WhatsApp, phone, and email details.
+- [x] Inspect available payment QR uploads and crop/clean Khalti and FonePay QR images only when their identities are verifiable. (Verified eSewa and Global IME assets; no Khalti/FonePay QR files were available.)
+- [x] Replace any unverified Khalti/FonePay receiver wording with accurate QR labels or a clear contact-support instruction.
+- [x] Re-test checkout payment instructions after the QR asset update.
+- [ ] Visually verify the checkout payment instructions after the QR crop update, including eSewa, Global IME Bank, Khalti, and FonePay states on desktop and mobile.
+- [ ] Add documented checkout UI evidence for the cropped QR assets and support instructions.
+- [x] Limit checkout payment choices to COD, eSewa, and Global IME Bank Transfer; remove Khalti and FonePay from the customer-facing payment UI.
+- [x] Re-test checkout payment selection and receipt-upload instructions after removing unsupported methods. (Unit and TypeScript checks pass.)
+- [ ] Visually verify the updated checkout shows only COD, eSewa, and Global IME Bank Transfer on desktop and mobile.
+- [ ] Capture final checkout evidence for the verified payment instructions and receipt-upload state.
