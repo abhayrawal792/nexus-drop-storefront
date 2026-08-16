@@ -118,3 +118,9 @@
 - [x] Add shared-wishlist link management with expiration dates, revoke actions, and clear active/revoked states.
 - [x] Add admin moderation-history search and start/end date filters using real history records.
 - [x] Add unit coverage, run migration/type/responsive checks, and save a checkpoint.
+- [x] Add an admin analytics dashboard with conversion-rate and wishlist-save visualizations.
+- [x] Add loading animation and success toast feedback when marking wishlist alerts as read.
+- [x] Add wishlist price-range and availability-status filters.
+- [x] Add focused tests, run TypeScript and responsive verification, and save a checkpoint for these enhancements.
+- [x] Add loading, success-toast, and error-toast feedback to header notification-bell mark-read actions.
+- [x] Capture fresh desktop and mobile verification for analytics and wishlist enhancements, then save a checkpoint.

@@ -3,6 +3,7 @@ import { randomBytes } from "node:crypto";
 import { supabase } from "./supabase";
 import { buildWishlistAlerts } from "./wishlistFeatures";
 import { normalizeReviewFilters } from "./reviewFeatures";
+import { buildAdminAnalytics } from "./analyticsFeatures";
 
 export type PaymentMethod = "COD" | "eSewa" | "Khalti" | "FonePay" | "BankTransfer";
 export type OrderStatus = "pending" | "confirmed" | "shipped" | "delivered" | "cancelled";
@@ -312,6 +313,15 @@ export async function getAdminStats() {
     activeInventory: catalog.filter(product => product.is_active).length,
     lowStock: catalog.filter(product => product.is_active && product.stock_quantity < 10).length,
   };
+}
+
+export async function getAdminAnalytics() {
+  const [{ data: orders, error: ordersError }, { data: wishlistSaves, error: wishlistError }] = await Promise.all([
+    supabase.from("orders").select("created_at, order_status").order("created_at", { ascending: false }).limit(5000),
+    supabase.from("wishlist_items").select("created_at").order("created_at", { ascending: false }).limit(5000),
+  ]);
+  if (ordersError || wishlistError) throw new Error(ordersError?.message ?? wishlistError?.message);
+  return buildAdminAnalytics(orders ?? [], wishlistSaves ?? []);
 }
 
 export async function listAdminOrders() {
