@@ -41,3 +41,4 @@
 - [x] Add tests for admin product, order, payment-proof, coupon, and product-image management procedures.
 - [x] Stabilize the managed preview and save a verified checkpoint so the customer storefront is reviewable in the project panel.
 - [x] Fix the Shop page so unsupported collection slugs safely fall back instead of causing a customer-facing runtime error.
+- [x] Redesign the free-delivery offer treatment as a restrained premium header utility strip.
