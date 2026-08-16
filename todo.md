@@ -128,3 +128,10 @@
 - [x] Add CSV export for analytics charts and summary metrics.
 - [x] Add wishlist sorting by price and date added while preserving filters.
 - [x] Add focused tests, run TypeScript/build/responsive verification, and save a checkpoint for these enhancements.
+- [x] Add quick-select buttons for Last 7 Days and This Month analytics ranges.
+- [x] Add a real-data Top Saved Products section to the admin analytics dashboard.
+- [x] Add visual price-drop badges to wishlist items using persisted price history.
+- [x] Add focused tests, run TypeScript/build/responsive verification, and save a checkpoint for these enhancements.
+- [x] Persist wishlist price at add time and compute price-drop badges from that snapshot.
+- [x] Add focused coverage for quick-range date calculations and persisted wishlist price-drop logic.
+- [x] Save a new checkpoint after the persisted price snapshot and final verification.

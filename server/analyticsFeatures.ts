@@ -1,5 +1,5 @@
 export type AnalyticsOrder = { created_at: string; order_status: string };
-export type AnalyticsWishlistSave = { created_at: string };
+export type AnalyticsWishlistSave = { created_at: string; product_id?: string; products?: { id: string; name: string; price: number | string; images?: string[] } | Array<{ id: string; name: string; price: number | string; images?: string[] }> | null };
 
 export function filterAnalyticsByDateRange<T extends { created_at: string }>(rows: T[], from?: string, to?: string) {
   const fromMs = from ? new Date(`${from}T00:00:00.000Z`).getTime() : Number.NEGATIVE_INFINITY;
@@ -38,8 +38,17 @@ export function buildAdminAnalytics(orders: AnalyticsOrder[], wishlistSaves: Ana
   });
   const totalOrders = orders.length;
   const completedOrders = orders.filter(order => ["confirmed", "shipped", "delivered"].includes(order.order_status)).length;
+  const savedProducts = new Map<string, { id: string; name: string; price: number; imageUrl: string; saves: number }>();
+  wishlistSaves.forEach(save => {
+    const product = Array.isArray(save.products) ? save.products[0] : save.products;
+    if (!product) return;
+    const current = savedProducts.get(product.id) ?? { id: product.id, name: product.name, price: Number(product.price), imageUrl: product.images?.[0] ?? "", saves: 0 };
+    current.saves += 1;
+    savedProducts.set(product.id, current);
+  });
   return {
     monthly,
+    topSavedProducts: Array.from(savedProducts.values()).sort((a, b) => b.saves - a.saves || a.name.localeCompare(b.name)).slice(0, 5),
     totalOrders,
     completedOrders,
     conversionRate: totalOrders ? Number(((completedOrders / totalOrders) * 100).toFixed(1)) : 0,

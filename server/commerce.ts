@@ -112,14 +112,16 @@ export async function createReview(input: { productId: string; userId: number; u
 
 export async function listWishlist(userId: number) {
   const profile = await ensureProfile(userId);
-  const { data, error } = await supabase.from("wishlist_items").select("product_id, created_at, products(*, categories(name, slug), reviews(rating, moderation_status))").eq("user_id", profile.id).order("created_at", { ascending: false });
+  const { data, error } = await supabase.from("wishlist_items").select("product_id, created_at, price_at_added, products(*, categories(name, slug), reviews(rating, moderation_status))").eq("user_id", profile.id).order("created_at", { ascending: false });
   if (error) throw new Error(error.message);
-  return (data ?? []).flatMap((row: any) => row.products ? [{ addedAt: new Date(row.created_at), ...toProduct(row.products as CatalogRow) }] : []);
+  return (data ?? []).flatMap((row: any) => row.products ? [{ addedAt: new Date(row.created_at), priceAtAdded: row.price_at_added === null ? null : Number(row.price_at_added), ...toProduct(row.products as CatalogRow) }] : []);
 }
 
 export async function addWishlist(userId: number, productId: string) {
   const profile = await ensureProfile(userId);
-  const { error } = await supabase.from("wishlist_items").upsert({ user_id: profile.id, product_id: productId }, { onConflict: "user_id,product_id" });
+  const { data: product, error: productError } = await supabase.from("products").select("price").eq("id", productId).maybeSingle();
+  if (productError) throw new Error(productError.message);
+  const { error } = await supabase.from("wishlist_items").upsert({ user_id: profile.id, product_id: productId, price_at_added: product ? Number(product.price) : null }, { onConflict: "user_id,product_id" });
   if (error) throw new Error(error.message);
   return { success: true };
 }
@@ -318,7 +320,7 @@ export async function getAdminStats() {
 export async function getAdminAnalytics(input: { from?: string; to?: string } = {}) {
   const [{ data: orders, error: ordersError }, { data: wishlistSaves, error: wishlistError }] = await Promise.all([
     supabase.from("orders").select("created_at, order_status").order("created_at", { ascending: false }).limit(5000),
-    supabase.from("wishlist_items").select("created_at").order("created_at", { ascending: false }).limit(5000),
+    supabase.from("wishlist_items").select("created_at, product_id, products(id, name, price, images)").order("created_at", { ascending: false }).limit(5000),
   ]);
   if (ordersError || wishlistError) throw new Error(ordersError?.message ?? wishlistError?.message);
   const filteredOrders = filterAnalyticsByDateRange(orders ?? [], input.from, input.to);

@@ -10,13 +10,15 @@ afterEach(() => mockFrom.mockReset());
 describe("wishlist and review operations", () => {
   it("upserts a wishlist item against the authenticated profile", async () => {
     const upsert = vi.fn().mockResolvedValue({ error: null });
+    const productQuery = { select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: { price: 1499 }, error: null }) }) }) };
     mockFrom.mockImplementation((table: string) => {
       if (table === "profiles") return { upsert: () => ({ select: () => ({ single: async () => ({ data: { id: "profile-1" }, error: null }) }) }) };
+      if (table === "products") return productQuery;
       if (table === "wishlist_items") return { upsert };
       throw new Error(`Unexpected table: ${table}`);
     });
     await expect(addWishlist(7, "a2d52c01-d76d-4b35-b6f7-e6b14a584b7a")).resolves.toEqual({ success: true });
-    expect(upsert).toHaveBeenCalledWith({ user_id: "profile-1", product_id: "a2d52c01-d76d-4b35-b6f7-e6b14a584b7a" }, { onConflict: "user_id,product_id" });
+    expect(upsert).toHaveBeenCalledWith({ user_id: "profile-1", product_id: "a2d52c01-d76d-4b35-b6f7-e6b14a584b7a", price_at_added: 1499 }, { onConflict: "user_id,product_id" });
   });
 
   it("removes only the authenticated profile's wishlist item", async () => {
