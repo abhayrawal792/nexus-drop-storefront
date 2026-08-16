@@ -16,7 +16,7 @@
 - [ ] Verify desktop and mobile layouts, test key interactions, and address any runtime or visual issues.
 - [x] Replace the starter commerce database with Supabase Postgres, Storage, and RLS policies while retaining Manus Auth for customer login and role-gated access.
 - [x] Add secure Supabase environment configuration and a deployable SQL setup script for the Nexus Drop schema and seed data.
-- [ ] Prepare the project for export to the user's GitHub account and document the publishing handoff.
+- [x] Prepare the project for export to the user's GitHub account and document the publishing handoff.
 - [x] Add the supplied Global IME Bank QR as a checkout payment option with bank-transfer instructions and payment-proof upload.
 - [ ] Complete and visually refine the entire customer-facing storefront before beginning admin dashboard implementation.
 - [x] Display real product review averages and review counts in the product grid.
@@ -39,3 +39,4 @@
 - [ ] Confirm every public route has a visible desktop and mobile entry point through the in-app navigation and customer flow.
 - [ ] Add server-logic coverage for catalog/category filtering, coupon validation, checkout, review submission, and implemented admin procedures.
 - [x] Stabilize the managed preview and save a verified checkpoint so the customer storefront is reviewable in the project panel.
+- [x] Fix the Shop page so unsupported collection slugs safely fall back instead of causing a customer-facing runtime error.
