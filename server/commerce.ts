@@ -4,6 +4,7 @@ import { supabase } from "./supabase";
 import { buildWishlistAlerts } from "./wishlistFeatures";
 import { rankWishlistRecommendations } from "./recommendationFeatures";
 import { normalizeReviewFilters } from "./reviewFeatures";
+import { adminReviewSelect, publicReviewSelect } from "./reviewQueryContracts";
 import { buildAdminAnalytics, filterAnalyticsByDateRange } from "./analyticsFeatures";
 import { filterProductActivity, type ProductActivityEntry } from "./activityFeatures";
 
@@ -89,7 +90,7 @@ export async function getProduct(slug: string) {
 }
 
 export async function listReviews(productId: string) {
-  const { data, error } = await supabase.from("reviews").select("id, rating, comment, created_at, verified_purchase, profiles(full_name)").eq("product_id", productId).eq("moderation_status", "approved").order("created_at", { ascending: false });
+  const { data, error } = await supabase.from("reviews").select(publicReviewSelect).eq("product_id", productId).eq("moderation_status", "approved").order("created_at", { ascending: false });
   if (error) throw new Error(error.message);
   return (data ?? []).map((review: any) => ({ id: review.id, rating: review.rating, comment: review.comment, createdAt: new Date(review.created_at), author: review.profiles?.full_name ?? "Verified customer", verifiedPurchase: Boolean(review.verified_purchase) }));
 }
@@ -137,7 +138,7 @@ export async function removeWishlist(userId: number, productId: string) {
 
 export async function listAdminReviews(input: { status?: "pending" | "approved" | "rejected"; verified?: boolean; search?: string; from?: string; to?: string } = {}) {
   const filters = normalizeReviewFilters(input);
-  let query = supabase.from("reviews").select("id, product_id, rating, comment, created_at, moderation_status, verified_purchase, profiles(full_name), products(name, slug), review_moderation_history(id, from_status, to_status, note, created_at, profiles(full_name))").order("created_at", { ascending: false });
+  let query = supabase.from("reviews").select(adminReviewSelect).order("created_at", { ascending: false });
   if (filters.status) query = query.eq("moderation_status", filters.status);
   if (filters.verified !== undefined) query = query.eq("verified_purchase", filters.verified);
   if (filters.from) query = query.gte("created_at", filters.from);

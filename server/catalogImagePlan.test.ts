@@ -14,4 +14,11 @@ describe("expanded catalog image plan", () => {
       expect(new Set(products).size).toBe(products.length);
     }
   });
+
+  it("covers all twenty-four catalog entries with product-specific image targets", () => {
+    const allProductSlugs = Object.values(categoryBySlug).flat();
+    expect(allProductSlugs).toHaveLength(24);
+    expect(new Set(allProductSlugs)).toHaveLength(24);
+    expect(allProductSlugs).not.toContain("generic-product-image");
+  });
 });

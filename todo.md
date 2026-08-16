@@ -188,3 +188,17 @@
 - [x] Add Today, Last 7 Days, and Last 30 Days shortcuts to activity-log filters and CSV exports.
 - [x] Replace out-of-stock recommendation add controls with a Notify Me email form.
 - [x] Add focused tests, run TypeScript/build/responsive verification, and save a checkpoint.
+
+- [x] Run the complete current verification suite before extending restock notifications.
+- [ ] Persist restock requests in Supabase with deduplication and server-side rate limiting.
+- [ ] Send back-in-stock notifications through Resend using server-only secrets.
+- [ ] Add focused tests, verify the protected workflow, and save a checkpoint.
+
+- [x] Run full functional, TypeScript, test, build, and responsive verification across the website.
+- [x] Repair any confirmed website issue discovered during verification.
+- [ ] Create a new private GitHub repository and push the validated Nexus Drop source code.
+- [ ] Confirm the repository state and report the verification outcome.
+
+- [x] Audit every catalog image against its product name, category, and detail copy.
+- [x] Replace mismatched catalog visuals with relevant product images and update the storefront data.
+- [x] Verify the image corrections across desktop and mobile shop and product-detail pages.
