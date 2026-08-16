@@ -1,0 +1,20 @@
+from pathlib import Path
+
+out = Path('/home/ubuntu/webdev-static-assets/nexus-drop')
+out.mkdir(parents=True, exist_ok=True)
+
+base = '''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800" role="img" aria-label="{label}">
+<defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#080b10"/><stop offset="1" stop-color="#172430"/></linearGradient><linearGradient id="bag" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#263747"/><stop offset="1" stop-color="#070b10"/></linearGradient><filter id="glow"><feGaussianBlur stdDeviation="8" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+<rect width="800" height="800" fill="url(#bg)"/><circle cx="650" cy="130" r="150" fill="#06b6d4" opacity=".08" filter="url(#glow)"/><ellipse cx="400" cy="675" rx="250" ry="32" fill="#000" opacity=".65"/>{art}<text x="400" y="750" text-anchor="middle" fill="#67e8f9" font-family="Arial,sans-serif" font-size="18" font-weight="700" letter-spacing="5">NEXUS DROP / {tag}</text></svg>'''
+
+arts = {
+ 'metro-crossbody-bag.svg': ("METRO CROSSBODY BAG", '''<path d="M205 330 Q400 245 595 330 L585 600 Q400 665 215 600Z" fill="url(#bag)" stroke="#06b6d4" stroke-width="5"/><path d="M205 330 Q400 430 595 330" fill="none" stroke="#334b5e" stroke-width="8"/><path d="M265 315 Q270 145 400 125 Q530 145 535 315" fill="none" stroke="#7dd3fc" stroke-width="24" stroke-linecap="round" opacity=".7"/><rect x="280" y="425" width="240" height="92" rx="18" fill="#0a1119" stroke="#2f5365" stroke-width="4"/><path d="M300 455H500" stroke="#06b6d4" stroke-width="5"/><circle cx="520" cy="470" r="10" fill="#67e8f9"/>'''),
+ 'utility-chest-pack.svg': ("UTILITY CHEST PACK", '''<path d="M235 260 Q400 200 565 260 L610 570 Q400 660 190 570Z" fill="url(#bag)" stroke="#06b6d4" stroke-width="5"/><path d="M285 250 Q300 120 400 105 Q500 120 515 250" fill="none" stroke="#526d7b" stroke-width="22"/><rect x="240" y="355" width="145" height="140" rx="20" fill="#0a1119" stroke="#6b8794" stroke-width="4"/><rect x="415" y="355" width="145" height="140" rx="20" fill="#0a1119" stroke="#6b8794" stroke-width="4"/><path d="M260 385H365M435 385H540" stroke="#06b6d4" stroke-width="5"/><path d="M268 540H532" stroke="#334b5e" stroke-width="8"/>'''),
+ 'shadow-daypack.svg': ("SHADOW DAYPACK", '''<path d="M220 250 Q400 155 580 250 L600 595 Q400 675 200 595Z" fill="url(#bag)" stroke="#06b6d4" stroke-width="5"/><path d="M285 250 Q295 105 400 95 Q505 105 515 250" fill="none" stroke="#526d7b" stroke-width="28"/><path d="M250 305H550" stroke="#253d4c" stroke-width="10"/><rect x="280" y="405" width="240" height="125" rx="22" fill="#0a1119" stroke="#6b8794" stroke-width="4"/><path d="M300 440H500" stroke="#06b6d4" stroke-width="5"/><path d="M330 230V585M470 230V585" stroke="#1e3443" stroke-width="12"/>'''),
+ 'mini-tech-pouch.svg': ("MINI TECH POUCH", '''<rect x="190" y="280" width="420" height="285" rx="48" fill="url(#bag)" stroke="#06b6d4" stroke-width="5"/><path d="M230 360H570" stroke="#718b98" stroke-width="10"/><path d="M245 385H555" stroke="#06b6d4" stroke-width="4"/><circle cx="590" cy="360" r="14" fill="#67e8f9"/><path d="M315 280V230 Q400 150 485 230V280" fill="none" stroke="#526d7b" stroke-width="18"/><rect x="335" y="455" width="130" height="44" rx="14" fill="#0a1119" stroke="#2f5365" stroke-width="4"/>'''),
+ 'axis-duffel-bag.svg': ("AXIS DUFFEL BAG", '''<path d="M175 350 Q400 235 625 350 L590 590 Q400 675 210 590Z" fill="url(#bag)" stroke="#06b6d4" stroke-width="5"/><path d="M270 350 Q275 170 350 155 Q400 145 450 155 Q525 170 530 350" fill="none" stroke="#667f8c" stroke-width="22"/><path d="M230 385H570" stroke="#06b6d4" stroke-width="6"/><path d="M250 470H550" stroke="#263d4c" stroke-width="18"/><circle cx="280" cy="555" r="18" fill="#67e8f9"/><circle cx="520" cy="555" r="18" fill="#67e8f9"/>'''),
+}
+
+for filename, (tag, art) in arts.items():
+    (out / filename).write_text(base.format(label=tag.title(), tag=tag, art=art), encoding='utf-8')
+    print(out / filename)

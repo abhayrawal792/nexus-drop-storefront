@@ -1,0 +1,4 @@
+{
+  "project_id": "bcbqxojafuxeprhgnbxs",
+  "query": "UPDATE products SET images = CASE slug WHEN 'cuban-chain' THEN ARRAY['/manus-storage/cuban-chain_20213cd3.png']::text[] WHEN 'chrono-watch' THEN ARRAY['/manus-storage/chrono-watch_c47368c4.png']::text[] WHEN 'cyberpunk-sunglasses' THEN ARRAY['/manus-storage/cyberpunk-sunglasses_f89fdb97.png']::text[] WHEN 'sling-bag' THEN ARRAY['/manus-storage/sling-bag_93d74de9.png']::text[] WHEN 'signet-ring' THEN ARRAY['/manus-storage/signet-ring_2aa7ba05.png']::text[] ELSE images END WHERE slug IN ('cuban-chain', 'chrono-watch', 'cyberpunk-sunglasses', 'sling-bag', 'signet-ring'); SELECT slug, images FROM products WHERE slug IN ('cuban-chain', 'chrono-watch', 'cyberpunk-sunglasses', 'sling-bag', 'signet-ring') ORDER BY slug LIMIT 5;"
+}

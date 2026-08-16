@@ -1,0 +1,4 @@
+{
+  "project_id": "bcbqxojafuxeprhgnbxs",
+  "query": "SELECT c.id, c.slug, c.name, COUNT(p.id) AS product_count FROM categories c LEFT JOIN products p ON p.category_id = c.id GROUP BY c.id, c.slug, c.name ORDER BY c.slug LIMIT 4;"
+}

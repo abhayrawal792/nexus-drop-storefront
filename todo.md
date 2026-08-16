@@ -23,9 +23,9 @@
 - [x] Add live quantity-based price totals to the product detail page.
 - [ ] Add the user-supplied eSewa, Khalti, and FonePay receiver details or QR assets to checkout before marking digital payments complete.
 - [x] Upload and display the supplied eSewa QR for Abhay Rawal in the checkout payment instructions.
-- [ ] Generate a cohesive dark product-image set with the connected Gemini service and replace the temporary catalog imagery. (Superseded by the Manus 1.6 Lite request.)
-- [ ] Generate a cohesive dark product-image set with Manus 1.6 Lite and replace the temporary catalog imagery.
-- [ ] Update the storefront catalog image references to the Manus-generated asset URLs and verify the product grid visually.
+- [x] Generate a cohesive dark product-image set with the connected Gemini service and replace the temporary catalog imagery. (Superseded by the Manus image-generation workflow.)
+- [ ] Generate a cohesive dark product-image set with Manus image generation and replace the temporary catalog imagery.
+- [ ] Update the storefront catalog image references to the generated asset URLs and verify the final product grid visually after generation completes.
 
 - [ ] Complete every public customer route and mobile navigation state before resuming admin-dashboard implementation.
 - [ ] Polish the home, product, cart, checkout, and account screens as a cohesive customer-facing shopping experience.
@@ -42,3 +42,11 @@
 - [x] Stabilize the managed preview and save a verified checkpoint so the customer storefront is reviewable in the project panel.
 - [x] Fix the Shop page so unsupported collection slugs safely fall back instead of causing a customer-facing runtime error.
 - [x] Redesign the free-delivery offer treatment as a restrained premium header utility strip.
+- [ ] Replace every mismatched catalog photo with an image that clearly represents its exact product name and verify all product cards and detail galleries after generation completes.
+- [ ] Stop auto-populating signed-in account names in the checkout customer form; keep customer fields blank and explicitly editable by default.
+- [ ] Audit and repair the complete customer journey: navigation, product selection, cart state, checkout fields, payment instructions, receipt uploads, account access, and order confirmation.
+- [ ] Test each repaired customer flow on desktop and mobile before resuming feature or styling work.
+- [ ] Expand Jewelry, Watches, Eyewear, and Bags to at least 5–8 distinct products per collection with individual names, prices, stock levels, and matched images.
+- [ ] Add 6–8 distinct bag products and verify the Bags collection contains no repeated product cards or images.
+- [ ] Use the connected Gemini image workflow for the remaining five distinct bag images if available; otherwise wait for the image-generation quota reset rather than reusing unrelated product photos.
+- [ ] Create five distinct in-house bag visuals for the expanded Bags collection and map each visual to the correct product record without reusing unrelated imagery.
