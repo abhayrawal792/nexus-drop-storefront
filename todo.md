@@ -156,3 +156,5 @@
 - [x] Save a checkpoint after the header controls are repaired.
 - [x] Remove the unnecessary theme toggle from the dark-only storefront header and mobile menu.
 - [x] Restore fixed dark-mode behavior, verify the simplified header, and save a checkpoint.
+- [x] Fix the mobile storefront so the complete page content renders and scrolls on phone viewports.
+- [x] Verify full-page mobile and desktop layouts and save a checkpoint.
