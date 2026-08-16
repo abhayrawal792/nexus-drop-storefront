@@ -184,3 +184,7 @@
 - [x] Add activity-log date-range filtering and apply it to CSV export.
 - [x] Show gray Out of Stock badges and disable recommendation add actions at zero inventory.
 - [x] Add focused tests, run TypeScript/build/responsive verification, and save a checkpoint.
+
+- [x] Add Today, Last 7 Days, and Last 30 Days shortcuts to activity-log filters and CSV exports.
+- [x] Replace out-of-stock recommendation add controls with a Notify Me email form.
+- [x] Add focused tests, run TypeScript/build/responsive verification, and save a checkpoint.
