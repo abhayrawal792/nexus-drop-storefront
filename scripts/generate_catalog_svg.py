@@ -27,10 +27,8 @@ def svg(slug, category, variant):
         ][variant]
     elif category == 'watches':
         roundcase = variant != 1
-        case = '<circle cx="512" cy="520" r="174"' if roundcase else '<rect x="338" y="346" width="348" height="348" rx="58"'
-        case_end = '/>' if roundcase else '/>'
-        face = '<circle cx="512" cy="520" r="145"' if roundcase else '<rect x="365" y="373" width="294" height="294" rx="40"'
-        face_end = '/>'
+        case = '<circle cx="512" cy="520" r="174"/>' if roundcase else '<rect x="338" y="346" width="348" height="348" rx="58"/>'
+        face = '<circle cx="512" cy="520" r="145"/>' if roundcase else '<rect x="365" y="373" width="294" height="294" rx="40"/>'
         details = '<path d="M512 520l72-56M512 520v-80" stroke="%s" stroke-width="14" stroke-linecap="round"/><circle cx="512" cy="520" r="12" fill="%s"/>' % (steel, cyan)
         if variant == 3: details = '<rect x="424" y="472" width="176" height="96" rx="14" fill="#020617" stroke="%s" stroke-width="8"/><path d="M450 505h90M450 535h125" stroke="%s" stroke-width="8"/>' % (cyan, steel)
         if variant == 5: details = '<circle cx="512" cy="520" r="80" fill="none" stroke="%s" stroke-width="10"/><path d="M512 440v160M432 520h160M455 463l114 114M569 463L455 577" stroke="%s" stroke-width="7"/>' % (cyan, steel)
