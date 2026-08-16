@@ -1,28 +1,54 @@
+import { z } from "zod";
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
+import { adminProcedure, protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import { systemRouter } from "./_core/systemRouter";
-import { publicProcedure, router } from "./_core/trpc";
+import { createOrder, createReview, getAdminStats, getPaymentProofUrl, getProduct, getUserOrders, listAdminOrders, listAdminProducts, listCategories, listCoupons, listProducts, listReviews, saveCoupon, saveProduct, updateOrder, uploadPaymentProof, uploadProductImage, validateCoupon } from "./commerce";
+
+const itemSchema = z.object({ productId: z.string().uuid(), quantity: z.number().int().min(1).max(10) });
+const orderSchema = z.object({
+  customerName: z.string().min(2).max(160), customerPhone: z.string().min(8).max(24), deliveryAddress: z.string().min(8).max(600), city: z.string().min(2).max(100),
+  paymentMethod: z.enum(["COD", "eSewa", "Khalti", "FonePay", "BankTransfer"]), paymentProofUrl: z.string().max(500).optional(), couponCode: z.string().max(40).optional(), items: z.array(itemSchema).min(1).max(20),
+});
+const imageUploadSchema = z.object({ fileName: z.string().max(100), dataUrl: z.string().max(3_000_000) });
+
+function readImageData(input: z.infer<typeof imageUploadSchema>) {
+  const match = input.dataUrl.match(/^data:([^;]+);base64,(.+)$/);
+  if (!match || !match[1].startsWith("image/")) throw new Error("Please upload a valid image.");
+  return { contentType: match[1], bytes: Buffer.from(match[2], "base64") };
+}
 
 export const appRouter = router({
-    // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with '/api/' so that the gateway can route correctly
   system: systemRouter,
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
     logout: publicProcedure.mutation(({ ctx }) => {
-      const cookieOptions = getSessionCookieOptions(ctx.req);
-      ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
-      return {
-        success: true,
-      } as const;
+      ctx.res.clearCookie(COOKIE_NAME, { ...getSessionCookieOptions(ctx.req), maxAge: -1 });
+      return { success: true } as const;
     }),
   }),
-
-  // TODO: add feature routers here, e.g.
-  // todo: router({
-  //   list: protectedProcedure.query(({ ctx }) =>
-  //     db.getUserTodos(ctx.user.id)
-  //   ),
-  // }),
+  store: router({
+    categories: publicProcedure.query(() => listCategories()),
+    catalog: publicProcedure.input(z.object({ category: z.string().optional(), search: z.string().optional(), sort: z.enum(["newest", "price-low", "price-high"]).optional() })).query(({ input }) => listProducts(input)),
+    product: publicProcedure.input(z.object({ slug: z.string().min(1) })).query(({ input }) => getProduct(input.slug)),
+    reviews: publicProcedure.input(z.object({ productId: z.string().uuid() })).query(({ input }) => listReviews(input.productId)),
+    coupon: publicProcedure.input(z.object({ code: z.string().max(40), subtotal: z.number().min(0) })).query(({ input }) => validateCoupon(input.code, input.subtotal)),
+    uploadReceipt: publicProcedure.input(imageUploadSchema).mutation(async ({ input, ctx }) => uploadPaymentProof({ fileName: input.fileName, ...readImageData(input), userId: ctx.user?.id })),
+    checkout: publicProcedure.input(orderSchema).mutation(({ input, ctx }) => createOrder({ ...input, userId: ctx.user?.id, userName: ctx.user?.name })),
+    submitReview: protectedProcedure.input(z.object({ productId: z.string().uuid(), rating: z.number().int().min(1).max(5), comment: z.string().min(4).max(800) })).mutation(({ input, ctx }) => createReview({ ...input, userId: ctx.user.id, userName: ctx.user.name, rating: input.rating, comment: input.comment })),
+    accountOrders: protectedProcedure.query(({ ctx }) => getUserOrders(ctx.user.id, ctx.user.name)),
+  }),
+  admin: router({
+    stats: adminProcedure.query(() => getAdminStats()),
+    products: adminProcedure.query(() => listAdminProducts()),
+    saveProduct: adminProcedure.input(z.object({ id: z.string().uuid().optional(), name: z.string().min(2).max(180), slug: z.string().min(2).max(180), description: z.string().min(10).max(1600), price: z.number().min(0), originalPrice: z.number().min(0).nullable().optional(), categoryId: z.string().uuid(), stockQuantity: z.number().int().min(0), images: z.array(z.string().url()).max(6), isFeatured: z.boolean(), isActive: z.boolean() })).mutation(({ input }) => saveProduct(input)),
+    orders: adminProcedure.query(() => listAdminOrders()),
+    updateOrder: adminProcedure.input(z.object({ id: z.string().uuid(), orderStatus: z.enum(["pending", "confirmed", "shipped", "delivered", "cancelled"]), paymentStatus: z.enum(["pending", "verified", "failed"]) })).mutation(({ input }) => updateOrder(input)),
+    paymentProof: adminProcedure.input(z.object({ orderId: z.string().uuid() })).query(({ input }) => getPaymentProofUrl(input.orderId)),
+    coupons: adminProcedure.query(() => listCoupons()),
+    saveCoupon: adminProcedure.input(z.object({ id: z.string().uuid().optional(), code: z.string().min(3).max(40), discountPercent: z.number().int().min(1).max(30), minSpend: z.number().min(0), maxUses: z.number().int().positive().nullable().optional(), isActive: z.boolean(), expiryDate: z.date().nullable().optional() })).mutation(({ input }) => saveCoupon(input)),
+    uploadProductImage: adminProcedure.input(imageUploadSchema).mutation(({ input }) => uploadProductImage({ fileName: input.fileName, ...readImageData(input) })),
+  }),
 });
 
 export type AppRouter = typeof appRouter;

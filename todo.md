@@ -1,0 +1,41 @@
+# Project TODO
+
+- [x] Configure the dark-mode Nexus Drop visual system, Inter typography, and supplied brand logo.
+- [x] Create the MySQL/Drizzle commerce schema for profiles, categories, products, reviews, coupons, orders, and order items.
+- [x] Apply the commerce schema migration and seed the exact five requested products, categories, and NEXUS30 coupon.
+- [ ] Create public product, category, review, checkout, and coupon server procedures with admin-only management procedures.
+- [x] Build the announcement bar, branded navigation, search, category selection, cart drawer trigger, and account entry point.
+- [x] Build the responsive homepage hero, exact trust badges, product filtering, sorting, discount tags, ratings, and add-to-cart actions.
+- [x] Build the product detail route with image gallery, stock display, dynamic pricing, rating summary, and authenticated review submission.
+- [x] Implement persisted cart behavior, delivery calculation of Rs. 150 or free above Rs. 3000, and NEXUS30 coupon discount logic.
+- [ ] Build checkout fields, COD/eSewa/Khalti/FonePay payment selection, eSewa receipt upload, and order confirmation tracking.
+- [x] Build the authenticated account page with order history and live delivery status badges.
+- [ ] Build a role-gated admin dashboard with revenue metrics, product management, order status/payment proof controls, and coupon management.
+- [x] Add the exact floating WhatsApp support destination and contact/policy footer.
+- [ ] Add automated tests for the commerce calculation and server logic.
+- [ ] Verify desktop and mobile layouts, test key interactions, and address any runtime or visual issues.
+- [x] Replace the starter commerce database with Supabase Postgres, Storage, and RLS policies while retaining Manus Auth for customer login and role-gated access.
+- [x] Add secure Supabase environment configuration and a deployable SQL setup script for the Nexus Drop schema and seed data.
+- [ ] Prepare the project for export to the user's GitHub account and document the publishing handoff.
+- [x] Add the supplied Global IME Bank QR as a checkout payment option with bank-transfer instructions and payment-proof upload.
+- [ ] Complete and visually refine the entire customer-facing storefront before beginning admin dashboard implementation.
+- [x] Display real product review averages and review counts in the product grid.
+- [x] Add live quantity-based price totals to the product detail page.
+- [ ] Add the user-supplied eSewa, Khalti, and FonePay receiver details or QR assets to checkout before marking digital payments complete.
+- [x] Upload and display the supplied eSewa QR for Abhay Rawal in the checkout payment instructions.
+- [ ] Generate a cohesive dark product-image set with the connected Gemini service and replace the temporary catalog imagery. (Superseded by the Manus 1.6 Lite request.)
+- [ ] Generate a cohesive dark product-image set with Manus 1.6 Lite and replace the temporary catalog imagery.
+- [ ] Update the storefront catalog image references to the Manus-generated asset URLs and verify the product grid visually.
+
+- [ ] Complete every public customer route and mobile navigation state before resuming admin-dashboard implementation.
+- [ ] Polish the home, product, cart, checkout, and account screens as a cohesive customer-facing shopping experience.
+- [ ] Verify visible cart, checkout, payment, and confirmation states with customer-ready content and interactions.
+
+- [x] Create a distinct /shop collection page separate from the home page.
+- [x] Create dedicated category routes for Jewelry, Watches, Eyewear, and Bags rather than query-only filtering.
+- [x] Create a dedicated /cart page in addition to the cart drawer.
+- [x] Make every public customer page reachable through clear desktop and mobile navigation.
+- [ ] Verify end-to-end navigation coverage across Home, Shop, category collection, product detail, Cart, Checkout, Account, confirmation, and policy routes on desktop and mobile.
+- [ ] Confirm every public route has a visible desktop and mobile entry point through the in-app navigation and customer flow.
+- [ ] Add server-logic coverage for catalog/category filtering, coupon validation, checkout, review submission, and implemented admin procedures.
+- [ ] Stabilize the managed preview and save a verified checkpoint so the customer storefront is reviewable in the project panel.

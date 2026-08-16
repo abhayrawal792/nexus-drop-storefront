@@ -5,16 +5,33 @@ import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
+import ProductDetail from "./pages/ProductDetail";
+import Checkout from "./pages/Checkout";
+import Account from "./pages/Account";
+import OrderConfirmation from "./pages/OrderConfirmation";
+import StoreShell from "./components/storefront/StoreShell";
+import { CartProvider } from "./contexts/CartContext";
+import Policy from "./pages/Policy";
+import Shop from "./pages/Shop";
+import Cart from "./pages/Cart";
 
 function Router() {
-  // make sure to consider if you need authentication for certain routes
   return (
-    <Switch>
-      <Route path={"/"} component={Home} />
-      <Route path={"/404"} component={NotFound} />
-      {/* Final fallback route */}
-      <Route component={NotFound} />
-    </Switch>
+    <StoreShell>
+      <Switch>
+        <Route path={"/"} component={Home} />
+        <Route path={"/shop"} component={Shop} />
+        <Route path={"/collections/:category"} component={Shop} />
+        <Route path={"/products/:slug"} component={ProductDetail} />
+        <Route path={"/cart"} component={Cart} />
+        <Route path={"/checkout"} component={Checkout} />
+        <Route path={"/account"} component={Account} />
+        <Route path={"/order-confirmation"} component={OrderConfirmation} />
+        <Route path={"/policies/:policy"} component={Policy} />
+        <Route path={"/404"} component={NotFound} />
+        <Route component={NotFound} />
+      </Switch>
+    </StoreShell>
   );
 }
 
@@ -26,13 +43,12 @@ function Router() {
 function App() {
   return (
     <ErrorBoundary>
-      <ThemeProvider
-        defaultTheme="light"
-        // switchable
-      >
+      <ThemeProvider defaultTheme="dark">
         <TooltipProvider>
-          <Toaster />
-          <Router />
+          <CartProvider>
+            <Toaster />
+            <Router />
+          </CartProvider>
         </TooltipProvider>
       </ThemeProvider>
     </ErrorBoundary>
