@@ -135,3 +135,5 @@
 - [x] Persist wishlist price at add time and compute price-drop badges from that snapshot.
 - [x] Add focused coverage for quick-range date calculations and persisted wishlist price-drop logic.
 - [x] Save a new checkpoint after the persisted price snapshot and final verification.
+- [x] Improve the Nexus Drop logo asset for sharper contrast and clearer small-size readability.
+- [x] Verify the updated logo at desktop and mobile header sizes and save a checkpoint.
