@@ -137,3 +137,10 @@
 - [x] Save a new checkpoint after the persisted price snapshot and final verification.
 - [x] Improve the Nexus Drop logo asset for sharper contrast and clearer small-size readability.
 - [x] Verify the updated logo at desktop and mobile header sizes and save a checkpoint.
+- [x] Add the refined SVG monogram as a browser favicon.
+- [x] Create and use a compact desktop wordmark variant in the larger header.
+- [x] Update Open Graph, Twitter card, and page metadata for refined social branding.
+- [x] Add focused metadata coverage, run TypeScript/build/responsive verification, and save a checkpoint.
+- [x] Remove the promotional offer strip from the storefront header as requested.
+- [x] Verify the simplified header at desktop and mobile sizes and save a checkpoint.
+- [x] Audit the complete TODO history and close every remaining unchecked task before final delivery.

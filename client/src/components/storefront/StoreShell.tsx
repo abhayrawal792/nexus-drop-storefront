@@ -1,6 +1,6 @@
 import { startLogin } from "@/const";
 import { useCart, type CartLine } from "@/contexts/CartContext";
-import NexusLogo from "@/components/storefront/NexusLogo";
+import NexusLogo, { NexusWordmark } from "@/components/storefront/NexusLogo";
 import { formatNpr } from "@/lib/format";
 import { trpc } from "@/lib/trpc";
 import { ArrowRight, Bell, CircleUserRound, Headphones, Heart, Loader2, Menu, Minus, Plus, Search, ShoppingBag, Trash2, X } from "lucide-react";
@@ -45,17 +45,10 @@ export default function StoreShell({ children }: { children: React.ReactNode }) 
 
   return (
     <div className="min-h-screen overflow-x-hidden bg-[#0A0A0A] text-slate-100">
-      <div className="border-b border-white/8 bg-[#0d151e]">
-        <div className="container flex h-8 items-center justify-center gap-2 text-[10px] font-bold tracking-[0.08em] text-slate-400 sm:text-[11px]">
-          <span className="hidden uppercase text-slate-500 sm:inline">Nepalgunj dispatch</span><span className="hidden h-1 w-1 rounded-full bg-slate-700 sm:inline" />
-          <span>Free delivery above <strong className="text-slate-200">Rs. 3,000</strong></span><span className="h-1 w-1 rounded-full bg-slate-700" />
-          <span className="rounded-md border border-cyan-300/20 bg-cyan-300/[.06] px-1.5 py-0.5 font-black text-cyan-300">NEXUS30 <span className="text-cyan-100/60">·</span> UP TO 30% OFF</span>
-        </div>
-      </div>
       <header className="sticky top-0 z-40 border-b border-white/8 bg-[#0A0A0A]/92 backdrop-blur-xl">
         <div className="container flex h-16 items-center gap-3 sm:h-[76px]">
           <button onClick={() => setMenuOpen(value => !value)} className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 text-slate-300 lg:hidden" aria-label="Toggle navigation"><Menu className="h-5 w-5" /></button>
-          <Link href="/" className="flex shrink-0 items-center gap-2.5"><NexusLogo className="h-10 w-10 sm:h-11 sm:w-11" /></Link>
+          <Link href="/" className="flex shrink-0 items-center gap-2.5"><span className="lg:hidden"><NexusLogo className="h-10 w-10 sm:h-11 sm:w-11" /></span><NexusWordmark /></Link>
           <nav className="hidden items-center gap-5 pl-5 text-xs font-bold uppercase tracking-[0.11em] text-slate-400 lg:flex">
             <Link href="/" className="transition hover:text-cyan-300">Home</Link><Link href="/shop" className="transition hover:text-cyan-300">Products</Link><Link href="/contact" className="transition hover:text-cyan-300">Contact / Inquiry</Link>
           </nav>
