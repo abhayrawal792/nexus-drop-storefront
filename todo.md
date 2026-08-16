@@ -164,3 +164,7 @@
 - [x] Add focused route/theme/recommendation tests, run TypeScript/build/responsive verification, and save a checkpoint.
 - [x] Audit and enforce admin-only access for the /admin route and all admin procedures.
 - [x] Add focused unauthorized/authorized access tests, verify the guard, and save a checkpoint.
+- [x] Add a protected admin activity log for recent product catalog changes.
+- [x] Verify zero-cost wishlist-aware recommendations remain available on product detail pages.
+- [x] Audit and repair remaining mobile layout issues across the storefront.
+- [x] Add focused tests, run TypeScript/build/responsive verification, and save a checkpoint.

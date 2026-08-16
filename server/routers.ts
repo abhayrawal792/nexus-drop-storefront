@@ -3,7 +3,7 @@ import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { adminProcedure, protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import { systemRouter } from "./_core/systemRouter";
-import { addWishlist, createOrder, createReview, createWishlistShare, getAdminAnalytics, getAdminStats, getPaymentProofUrl, getProduct, getProductRecommendations, getSharedWishlist, getUserOrders, listAdminOrders, listAdminProducts, listAdminReviews, listCategories, listCoupons, listProducts, listReviews, listWishlist, listWishlistAlerts, listWishlistShares, markWishlistAlertRead, moderateReview, removeWishlist, revokeWishlistShare, saveCoupon, saveProduct, updateWishlistShare, updateOrder, uploadPaymentProof, uploadProductImage, validateCoupon } from "./commerce";
+import { addWishlist, createOrder, createReview, createWishlistShare, getAdminAnalytics, getAdminStats, getPaymentProofUrl, getProduct, getProductRecommendations, getSharedWishlist, getUserOrders, listAdminOrders, listAdminProducts, listAdminReviews, listCategories, listCoupons, listProducts, listReviews, listWishlist, listWishlistAlerts, listWishlistShares, listProductActivity, markWishlistAlertRead, moderateReview, removeWishlist, revokeWishlistShare, saveCoupon, saveProduct, updateWishlistShare, updateOrder, uploadPaymentProof, uploadProductImage, validateCoupon } from "./commerce";
 
 const itemSchema = z.object({ productId: z.string().uuid(), quantity: z.number().int().min(1).max(10) });
 const orderSchema = z.object({
@@ -53,7 +53,8 @@ export const appRouter = router({
     stats: adminProcedure.query(() => getAdminStats()),
     analytics: adminProcedure.input(z.object({ from: z.string().date().optional(), to: z.string().date().optional() }).optional()).query(({ input }) => getAdminAnalytics(input ?? {})),
     products: adminProcedure.query(() => listAdminProducts()),
-    saveProduct: adminProcedure.input(z.object({ id: z.string().uuid().optional(), name: z.string().min(2).max(180), slug: z.string().min(2).max(180), description: z.string().min(10).max(1600), price: z.number().min(0), originalPrice: z.number().min(0).nullable().optional(), categoryId: z.string().uuid(), stockQuantity: z.number().int().min(0), images: z.array(z.string().url()).max(6), isFeatured: z.boolean(), isActive: z.boolean() })).mutation(({ input }) => saveProduct(input)),
+    saveProduct: adminProcedure.input(z.object({ id: z.string().uuid().optional(), name: z.string().min(2).max(180), slug: z.string().min(2).max(180), description: z.string().min(10).max(1600), price: z.number().min(0), originalPrice: z.number().min(0).nullable().optional(), categoryId: z.string().uuid(), stockQuantity: z.number().int().min(0), images: z.array(z.string().url()).max(6), isFeatured: z.boolean(), isActive: z.boolean() })).mutation(({ input, ctx }) => saveProduct({ ...input, adminUserId: ctx.user.id, adminName: ctx.user.name })),
+    productActivity: adminProcedure.input(z.object({ limit: z.number().int().min(1).max(50).optional() }).optional()).query(({ input, ctx }) => listProductActivity({ userId: ctx.user.id, limit: input?.limit })),
     orders: adminProcedure.query(() => listAdminOrders()),
     updateOrder: adminProcedure.input(z.object({ id: z.string().uuid(), orderStatus: z.enum(["pending", "confirmed", "shipped", "delivered", "cancelled"]), paymentStatus: z.enum(["pending", "verified", "failed"]) })).mutation(({ input }) => updateOrder(input)),
     paymentProof: adminProcedure.input(z.object({ orderId: z.string().uuid() })).query(({ input }) => getPaymentProofUrl(input.orderId)),

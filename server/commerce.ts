@@ -355,7 +355,21 @@ export async function listAdminProducts() {
   return (data ?? []).map(row => toProduct(row as CatalogRow));
 }
 
-export async function saveProduct(input: { id?: string; name: string; slug: string; description: string; price: number; originalPrice?: number | null; categoryId: string; stockQuantity: number; images: string[]; isFeatured: boolean; isActive: boolean }) {
+export async function recordProductActivity(input: { adminUserId: number; adminName?: string | null; productId?: string | null; productName: string; action: "created" | "updated"; changes: Record<string, unknown> }) {
+  const profile = await ensureProfile(input.adminUserId, input.adminName);
+  const { error } = await supabase.from("product_activity_log").insert({ admin_profile_id: profile.id, product_id: input.productId ?? null, product_name: input.productName, action: input.action, changes: input.changes });
+  if (error) throw new Error(error.message);
+  return { success: true };
+}
+
+export async function listProductActivity(input: { userId: number; limit?: number }) {
+  await ensureProfile(input.userId);
+  const { data, error } = await supabase.from("product_activity_log").select("id, action, product_id, product_name, changes, created_at, profiles(full_name), products(name, slug)").order("created_at", { ascending: false }).limit(Math.min(Math.max(input.limit ?? 10, 1), 50));
+  if (error) throw new Error(error.message);
+  return (data ?? []).map((entry: any) => ({ id: entry.id, action: entry.action, productId: entry.product_id, productName: entry.product_name, changes: entry.changes ?? {}, createdAt: new Date(entry.created_at), adminName: entry.profiles?.full_name ?? "Admin", productSlug: entry.products?.slug ?? null }));
+}
+
+export async function saveProduct(input: { id?: string; name: string; slug: string; description: string; price: number; originalPrice?: number | null; categoryId: string; stockQuantity: number; images: string[]; isFeatured: boolean; isActive: boolean; adminUserId?: number; adminName?: string | null }) {
   const discountPercent = input.originalPrice && input.originalPrice > input.price ? Math.round(((input.originalPrice - input.price) / input.originalPrice) * 100) : 0;
   const payload = { name: input.name, slug: input.slug, description: input.description, price: input.price, original_price: input.originalPrice ?? null, discount_percent: discountPercent, category_id: input.categoryId, stock_quantity: input.stockQuantity, images: input.images, is_featured: input.isFeatured, is_active: input.isActive };
   let previous: { price: number; stock_quantity: number } | null = null;
@@ -364,6 +378,11 @@ export async function saveProduct(input: { id?: string; name: string; slug: stri
   const { error } = await query;
   if (error) throw new Error(error.message);
   if (input.id && previous) await createWishlistAlerts(input.id, previous.price, input.price, previous.stock_quantity, input.stockQuantity);
+  if (input.adminUserId) {
+    let productId = input.id ?? null;
+    if (!productId) { const { data: created } = await supabase.from("products").select("id").eq("slug", input.slug).maybeSingle(); productId = created?.id ?? null; }
+    await recordProductActivity({ adminUserId: input.adminUserId, adminName: input.adminName, productId, productName: input.name, action: input.id ? "updated" : "created", changes: input.id ? { price: input.price, stockQuantity: input.stockQuantity, isActive: input.isActive } : { price: input.price, stockQuantity: input.stockQuantity, isActive: input.isActive } });
+  }
   return { success: true };
 }
 
