@@ -50,3 +50,9 @@
 - [ ] Add 6–8 distinct bag products and verify the Bags collection contains no repeated product cards or images.
 - [ ] Use the connected Gemini image workflow for the remaining five distinct bag images if available; otherwise wait for the image-generation quota reset rather than reusing unrelated product photos.
 - [ ] Create five distinct in-house bag visuals for the expanded Bags collection and map each visual to the correct product record without reusing unrelated imagery.
+- [ ] Generate one product-specific studio asset for every planned expanded catalog item using the connected Gemini service.
+- [ ] Populate all four product categories with six distinct active catalog records and map each record to its own first image.
+- [ ] Validate all four categories show six products and no repeated image URL in their storefront grid.
+- [x] Add a Buy Now action beside Add to Cart on product cards and product-detail pages, taking the shopper directly to checkout with the selected item.
+- [x] Replace separate category menu buttons with Home, Products, and a grouped Categories menu containing Jewelry, Watches, Eyewear, and Bags.
+- [x] Change promotional copy from exact “30% Off” to “Up to 30% Off” across the announcement strip and related storefront copy.

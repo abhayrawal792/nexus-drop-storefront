@@ -1,4 +1,5 @@
 import { FREE_DELIVERY_THRESHOLD, STANDARD_DELIVERY_CHARGE } from "@shared/commerce";
+import { buildBuyNowCart } from "@/lib/cartPurchase";
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 
 export type CartProduct = {
@@ -9,7 +10,7 @@ export type CartLine = { product: CartProduct; quantity: number };
 
 type CartContextValue = {
   items: CartLine[]; subtotal: number; discountPercent: number; discountAmount: number; deliveryCharge: number; total: number; couponCode: string;
-  addItem: (product: CartProduct, quantity?: number) => void; updateQuantity: (id: string, quantity: number) => void; removeItem: (id: string) => void;
+  addItem: (product: CartProduct, quantity?: number) => void; buyNow: (product: CartProduct, quantity?: number) => void; updateQuantity: (id: string, quantity: number) => void; removeItem: (id: string) => void;
   clearCart: () => void; applyCoupon: (code: string, discountPercent: number) => void; removeCoupon: () => void;
 };
 
@@ -39,6 +40,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     return {
       items, subtotal, couponCode, discountPercent, discountAmount, deliveryCharge, total: Math.max(0, subtotal - discountAmount + deliveryCharge),
       addItem(product, quantity = 1) { setItems(current => { const currentItem = current.find(item => item.product.id === product.id); if (!currentItem) return [...current, { product, quantity: Math.min(quantity, product.stockQuantity) }]; return current.map(item => item.product.id === product.id ? { ...item, quantity: Math.min(item.quantity + quantity, product.stockQuantity) } : item); }); },
+      buyNow(product, quantity = 1) { setItems(buildBuyNowCart(product, quantity)); setCouponCode(""); setDiscountPercent(0); },
       updateQuantity(id, quantity) { setItems(current => current.flatMap(item => item.product.id === id ? (quantity <= 0 ? [] : [{ ...item, quantity: Math.min(quantity, item.product.stockQuantity) }]) : [item])); },
       removeItem(id) { setItems(current => current.filter(item => item.product.id !== id)); },
       clearCart() { setItems([]); setCouponCode(""); setDiscountPercent(0); },
