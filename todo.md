@@ -12,7 +12,7 @@
 - [x] Build the authenticated account page with order history and live delivery status badges.
 - [x] Build a role-gated admin dashboard with revenue metrics, product management, order status/payment proof controls, and coupon management.
 - [x] Add the exact floating WhatsApp support destination and contact/policy footer.
-- [ ] Add automated tests for the commerce calculation and server logic.
+- [x] Add automated tests for the commerce calculation and server logic.
 - [ ] Verify desktop and mobile layouts, test key interactions, and address any runtime or visual issues.
 - [x] Replace the starter commerce database with Supabase Postgres, Storage, and RLS policies while retaining Manus Auth for customer login and role-gated access.
 - [x] Add secure Supabase environment configuration and a deployable SQL setup script for the Nexus Drop schema and seed data.
@@ -37,6 +37,7 @@
 - [x] Make every public customer page reachable through clear desktop and mobile navigation.
 - [ ] Verify end-to-end navigation coverage across Home, Shop, category collection, product detail, Cart, Checkout, Account, confirmation, and policy routes on desktop and mobile.
 - [ ] Confirm every public route has a visible desktop and mobile entry point through the in-app navigation and customer flow.
-- [ ] Add server-logic coverage for catalog/category filtering, coupon validation, checkout, review submission, and implemented admin procedures.
+- [x] Add server-logic coverage for catalog/category filtering, coupon validation, checkout, review submission, and implemented admin procedures.
+- [x] Add tests for admin product, order, payment-proof, coupon, and product-image management procedures.
 - [x] Stabilize the managed preview and save a verified checkpoint so the customer storefront is reviewable in the project panel.
 - [x] Fix the Shop page so unsupported collection slugs safely fall back instead of causing a customer-facing runtime error.
