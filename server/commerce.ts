@@ -5,6 +5,7 @@ import { buildWishlistAlerts } from "./wishlistFeatures";
 import { rankWishlistRecommendations } from "./recommendationFeatures";
 import { normalizeReviewFilters } from "./reviewFeatures";
 import { buildAdminAnalytics, filterAnalyticsByDateRange } from "./analyticsFeatures";
+import { filterProductActivity, type ProductActivityEntry } from "./activityFeatures";
 
 export type PaymentMethod = "COD" | "eSewa" | "Khalti" | "FonePay" | "BankTransfer";
 export type OrderStatus = "pending" | "confirmed" | "shipped" | "delivered" | "cancelled";
@@ -362,11 +363,12 @@ export async function recordProductActivity(input: { adminUserId: number; adminN
   return { success: true };
 }
 
-export async function listProductActivity(input: { userId: number; limit?: number }) {
+export async function listProductActivity(input: { userId: number; limit?: number; administrator?: string; action?: "created" | "updated"; from?: string; to?: string }) {
   await ensureProfile(input.userId);
-  const { data, error } = await supabase.from("product_activity_log").select("id, action, product_id, product_name, changes, created_at, profiles(full_name), products(name, slug)").order("created_at", { ascending: false }).limit(Math.min(Math.max(input.limit ?? 10, 1), 50));
+  const { data, error } = await supabase.from("product_activity_log").select("id, action, product_id, product_name, changes, created_at, profiles(full_name), products(name, slug)").order("created_at", { ascending: false }).limit(100);
   if (error) throw new Error(error.message);
-  return (data ?? []).map((entry: any) => ({ id: entry.id, action: entry.action, productId: entry.product_id, productName: entry.product_name, changes: entry.changes ?? {}, createdAt: new Date(entry.created_at), adminName: entry.profiles?.full_name ?? "Admin", productSlug: entry.products?.slug ?? null }));
+  const entries = (data ?? []).map((entry: any) => ({ id: entry.id, action: entry.action, productId: entry.product_id, productName: entry.product_name, changes: entry.changes ?? {}, createdAt: new Date(entry.created_at), adminName: entry.profiles?.full_name ?? "Admin", productSlug: entry.products?.slug ?? null })) as ProductActivityEntry[];
+  return filterProductActivity(entries, input);
 }
 
 export async function saveProduct(input: { id?: string; name: string; slug: string; description: string; price: number; originalPrice?: number | null; categoryId: string; stockQuantity: number; images: string[]; isFeatured: boolean; isActive: boolean; adminUserId?: number; adminName?: string | null }) {

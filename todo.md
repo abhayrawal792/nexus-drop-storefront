@@ -168,3 +168,7 @@
 - [x] Verify zero-cost wishlist-aware recommendations remain available on product detail pages.
 - [x] Audit and repair remaining mobile layout issues across the storefront.
 - [x] Add focused tests, run TypeScript/build/responsive verification, and save a checkpoint.
+- [x] Add protected administrator, action-type, and date filters to the admin activity log.
+- [x] Make activity-log product names link directly to the catalog editor view.
+- [x] Add Quick Add to Cart actions to wishlist-aware product recommendations.
+- [x] Add focused tests, run authorization/TypeScript/build/responsive verification, and save a checkpoint.
