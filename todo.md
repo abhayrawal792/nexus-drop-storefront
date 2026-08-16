@@ -158,3 +158,7 @@
 - [x] Restore fixed dark-mode behavior, verify the simplified header, and save a checkpoint.
 - [x] Fix the mobile storefront so the complete page content renders and scrolls on phone viewports.
 - [x] Verify full-page mobile and desktop layouts and save a checkpoint.
+- [x] Audit and repair all header navigation routes and actions.
+- [x] Implement a complete light theme and re-enable the theme toggle across all pages.
+- [x] Verify zero-cost wishlist-aware recommendations on product detail pages.
+- [x] Add focused route/theme/recommendation tests, run TypeScript/build/responsive verification, and save a checkpoint.

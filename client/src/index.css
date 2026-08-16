@@ -184,3 +184,67 @@
     }
   }
 }
+
+/* Light mode compatibility for the existing dark-first storefront components. */
+body.light-mode {
+  background: #f5f7fa;
+  color: #17202a;
+}
+body.light-mode [class*="bg-[#0A0A0A]"],
+body.light-mode [class*="bg-[#080d12]"] {
+  background-color: #f5f7fa !important;
+}
+body.light-mode [class*="bg-[#101821]"],
+body.light-mode [class*="bg-[#121a24]"],
+body.light-mode [class*="bg-black/20"] {
+  background-color: #ffffff !important;
+}
+body.light-mode [class*="bg-white/[.02]"],
+body.light-mode [class*="bg-white/[.03]"],
+body.light-mode [class*="bg-white/5"] {
+  background-color: #eef2f6 !important;
+}
+body.light-mode [class*="text-white"] {
+  color: #17202a !important;
+}
+body.light-mode [class*="text-slate-100"],
+body.light-mode [class*="text-slate-200"],
+body.light-mode [class*="text-slate-300"] {
+  color: #334155 !important;
+}
+body.light-mode [class*="text-slate-400"],
+body.light-mode [class*="text-slate-500"],
+body.light-mode [class*="text-slate-600"] {
+  color: #64748b !important;
+}
+body.light-mode [class*="border-white"] {
+  border-color: #d9e1ea !important;
+}
+body.light-mode input,
+body.light-mode textarea,
+body.light-mode select {
+  color: #17202a !important;
+}
+body.light-mode input::placeholder,
+body.light-mode textarea::placeholder {
+  color: #94a3b8 !important;
+}
+body.light-mode [class*="bg-[#0A0A0A]"] input,
+body.light-mode [class*="bg-[#101821]"] input,
+body.light-mode [class*="bg-[#101821]"] textarea {
+  background-color: #ffffff !important;
+}
+body.light-mode [class*="bg-[#0b121a]"],
+body.light-mode [class*="bg-[#0d151e]"],
+body.light-mode [class*="bg-[#142230]"] {
+  background-color: #eef2f6 !important;
+}
+body.light-mode main > section:first-child > div.absolute > div.absolute {
+  background: linear-gradient(90deg, rgb(255 255 255 / 92%), rgb(255 255 255 / 76%), rgb(255 255 255 / 34%)) !important;
+}
+body.light-mode [class*="text-cyan-200"] {
+  color: #087f9b !important;
+}
+body.light-mode [class*="text-cyan-300"] {
+  color: #007d99 !important;
+}

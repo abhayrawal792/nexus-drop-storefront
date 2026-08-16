@@ -33,8 +33,14 @@ export function ThemeProvider({
     const root = document.documentElement;
     if (theme === "dark") {
       root.classList.add("dark");
+      root.classList.remove("light");
+      document.body.classList.add("dark-mode");
+      document.body.classList.remove("light-mode");
     } else {
       root.classList.remove("dark");
+      root.classList.add("light");
+      document.body.classList.add("light-mode");
+      document.body.classList.remove("dark-mode");
     }
 
     if (switchable) {
