@@ -48,7 +48,15 @@ export async function listCategories() {
   return data ?? [];
 }
 
-export async function listProducts(input: { category?: string; search?: string; sort?: "newest" | "price-low" | "price-high" }) {
+export function normalizeCatalogFilters(input: { minPrice?: number; maxPrice?: number }) {
+  const minPrice = input.minPrice !== undefined && input.minPrice >= 0 ? input.minPrice : undefined;
+  const maxPrice = input.maxPrice !== undefined && input.maxPrice >= 0 ? input.maxPrice : undefined;
+  if (minPrice !== undefined && maxPrice !== undefined && minPrice > maxPrice) return {};
+  return { ...(minPrice === undefined ? {} : { minPrice }), ...(maxPrice === undefined ? {} : { maxPrice }) };
+}
+
+export async function listProducts(input: { category?: string; search?: string; minPrice?: number; maxPrice?: number; sort?: "newest" | "price-low" | "price-high" }) {
+  const priceFilters = normalizeCatalogFilters(input);
   let query = supabase.from("products").select("*, categories(name, slug), reviews(rating)").eq("is_active", true);
   if (input.category) {
     const { data: category, error: categoryError } = await supabase.from("categories").select("id").eq("slug", input.category).maybeSingle();
@@ -57,6 +65,8 @@ export async function listProducts(input: { category?: string; search?: string; 
     query = query.eq("category_id", category.id);
   }
   if (input.search?.trim()) query = query.or(`name.ilike.%${input.search.trim()}%,description.ilike.%${input.search.trim()}%`);
+  if (priceFilters.minPrice !== undefined) query = query.gte("price", priceFilters.minPrice);
+  if (priceFilters.maxPrice !== undefined) query = query.lte("price", priceFilters.maxPrice);
   if (input.sort === "price-low") query = query.order("price", { ascending: true });
   else if (input.sort === "price-high") query = query.order("price", { ascending: false });
   else query = query.order("created_at", { ascending: false });

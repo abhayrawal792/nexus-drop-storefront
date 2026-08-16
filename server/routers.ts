@@ -29,7 +29,7 @@ export const appRouter = router({
   }),
   store: router({
     categories: publicProcedure.query(() => listCategories()),
-    catalog: publicProcedure.input(z.object({ category: z.string().optional(), search: z.string().optional(), sort: z.enum(["newest", "price-low", "price-high"]).optional() })).query(({ input }) => listProducts(input)),
+    catalog: publicProcedure.input(z.object({ category: z.string().optional(), search: z.string().optional(), minPrice: z.number().min(0).optional(), maxPrice: z.number().min(0).optional(), sort: z.enum(["newest", "price-low", "price-high"]).optional() })).query(({ input }) => listProducts(input)),
     product: publicProcedure.input(z.object({ slug: z.string().min(1) })).query(({ input }) => getProduct(input.slug)),
     reviews: publicProcedure.input(z.object({ productId: z.string().uuid() })).query(({ input }) => listReviews(input.productId)),
     coupon: publicProcedure.input(z.object({ code: z.string().max(40), subtotal: z.number().min(0) })).query(({ input }) => validateCoupon(input.code, input.subtotal)),

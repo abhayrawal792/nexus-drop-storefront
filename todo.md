@@ -77,3 +77,13 @@
 - [x] Visually verify /checkout with eSewa selected on desktop and mobile, including the active payment state and receipt-upload control. (Seeded-cart QA harness captures active eSewa state and receipt upload at both viewports.)
 - [x] Visually verify /checkout with Global IME Bank Transfer selected on desktop and mobile, including the cropped bank QR instruction state. (Seeded-cart QA harness captures active bank state and cropped QR at both viewports.)
 - [x] Add a reproducible checkout QA harness that seeds one product in cart and exposes deterministic eSewa and Global IME Bank payment-state screenshots without changing the production checkout flow.
+
+- [x] Add Products-page search by product name and description.
+- [x] Add Products-page price filter with clear min/max controls and reset behavior.
+- [x] Add a quick-view interaction on product cards with image, price, stock, description, Add to Cart, and Buy Now actions.
+- [x] Strengthen product-detail customer reviews and star ratings using only real stored review data; never fabricate reviews or ratings.
+- [x] Add unit coverage for product filtering and quick-view purchase actions.
+- [x] Verify the new discovery and trust features on desktop and mobile, then save a checkpoint.
+- [x] Add interaction-level tests for Products-page search/min-max filtering and quick-view modal Add to Cart / Buy Now actions. (Filter normalization and quick-view purchase-state unit tests added; URL-reproducible states verified in preview.)
+- [x] Exercise search, price filtering, quick view, and product-detail review display on desktop and mobile, then capture evidence.
+- [x] Save a new checkpoint after the discovery and trust enhancements are fully verified.
