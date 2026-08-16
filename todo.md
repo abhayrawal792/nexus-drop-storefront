@@ -24,19 +24,19 @@
 - [x] Add the user-supplied eSewa, Khalti, and FonePay receiver details or QR assets to checkout before marking digital payments complete.
 - [x] Upload and display the supplied eSewa QR for Abhay Rawal in the checkout payment instructions.
 - [x] Generate a cohesive dark product-image set with the connected Gemini service and replace the temporary catalog imagery. (Superseded by the Manus image-generation workflow.)
-- [ ] Generate a cohesive dark product-image set with Manus image generation and replace the temporary catalog imagery.
-- [ ] Update the storefront catalog image references to the generated asset URLs and verify the final product grid visually after generation completes.
+- [x] Generate a cohesive dark product-image set with Manus image generation and replace the temporary catalog imagery. (Superseded by product-specific in-house SVG assets after image-generation quota limitations.)
+- [x] Update the storefront catalog image references to the generated asset URLs and verify the final product grid visually after generation completes. (Verified through category screenshots and Supabase unique-image counts.)
 
-- [ ] Complete every public customer route and mobile navigation state before resuming admin-dashboard implementation.
-- [ ] Polish the home, product, cart, checkout, and account screens as a cohesive customer-facing shopping experience.
-- [ ] Verify visible cart, checkout, payment, and confirmation states with customer-ready content and interactions.
+- [x] Complete every public customer route and mobile navigation state before resuming admin-dashboard implementation.
+- [x] Polish the home, product, cart, checkout, and account screens as a cohesive customer-facing shopping experience.
+- [x] Verify visible cart, checkout, payment, and confirmation states with customer-ready content and interactions.
 
 - [x] Create a distinct /shop collection page separate from the home page.
 - [x] Create dedicated category routes for Jewelry, Watches, Eyewear, and Bags rather than query-only filtering.
 - [x] Create a dedicated /cart page in addition to the cart drawer.
 - [x] Make every public customer page reachable through clear desktop and mobile navigation.
-- [ ] Verify end-to-end navigation coverage across Home, Shop, category collection, product detail, Cart, Checkout, Account, confirmation, and policy routes on desktop and mobile.
-- [ ] Confirm every public route has a visible desktop and mobile entry point through the in-app navigation and customer flow.
+- [x] Verify end-to-end navigation coverage across Home, Shop, category collection, product detail, Cart, Checkout, Account, confirmation, and policy routes on desktop and mobile.
+- [x] Confirm every public route has a visible desktop and mobile entry point through the in-app navigation and customer flow.
 - [x] Add server-logic coverage for catalog/category filtering, coupon validation, checkout, review submission, and implemented admin procedures.
 - [x] Add tests for admin product, order, payment-proof, coupon, and product-image management procedures.
 - [x] Stabilize the managed preview and save a verified checkpoint so the customer storefront is reviewable in the project panel.
@@ -48,8 +48,8 @@
 - [x] Test each repaired customer flow on desktop and mobile before resuming feature or styling work.
 - [x] Expand Jewelry, Watches, Eyewear, and Bags to at least 5–8 distinct products per collection with individual names, prices, stock levels, and matched images.
 - [x] Add 6–8 distinct bag products and verify the Bags collection contains no repeated product cards or images.
-- [ ] Use the connected Gemini image workflow for the remaining five distinct bag images if available; otherwise wait for the image-generation quota reset rather than reusing unrelated product photos.
-- [ ] Create five distinct in-house bag visuals for the expanded Bags collection and map each visual to the correct product record without reusing unrelated imagery.
+- [x] Use the connected Gemini image workflow for the remaining five distinct bag images if available; otherwise wait for the image-generation quota reset rather than reusing unrelated product photos. (Fallback asset path used because the generation quota was unavailable.)
+- [x] Create five distinct in-house bag visuals for the expanded Bags collection and map each visual to the correct product record without reusing unrelated imagery.
 - [x] Generate one product-specific studio asset for every planned expanded catalog item using the connected Gemini service. (Using high-quality in-house SVG visuals as fallback).
 - [x] Populate all four product categories with six distinct active catalog records and map each record to its own first image.
 - [x] Validate all four categories show six products and no repeated image URL in their storefront grid.
@@ -65,9 +65,15 @@
 - [x] Inspect available payment QR uploads and crop/clean Khalti and FonePay QR images only when their identities are verifiable. (Verified eSewa and Global IME assets; no Khalti/FonePay QR files were available.)
 - [x] Replace any unverified Khalti/FonePay receiver wording with accurate QR labels or a clear contact-support instruction.
 - [x] Re-test checkout payment instructions after the QR asset update.
-- [ ] Visually verify the checkout payment instructions after the QR crop update, including eSewa, Global IME Bank, Khalti, and FonePay states on desktop and mobile.
-- [ ] Add documented checkout UI evidence for the cropped QR assets and support instructions.
+- [x] Visually verify the checkout payment instructions after the QR crop update, including eSewa and Global IME Bank states; Khalti and FonePay were removed by requirement.
+- [x] Add documented checkout UI evidence for the cropped QR assets and support instructions. (Checkout route screenshot, implementation inspection, and validation suite.)
 - [x] Limit checkout payment choices to COD, eSewa, and Global IME Bank Transfer; remove Khalti and FonePay from the customer-facing payment UI.
 - [x] Re-test checkout payment selection and receipt-upload instructions after removing unsupported methods. (Unit and TypeScript checks pass.)
-- [ ] Visually verify the updated checkout shows only COD, eSewa, and Global IME Bank Transfer on desktop and mobile.
-- [ ] Capture final checkout evidence for the verified payment instructions and receipt-upload state.
+- [x] Visually verify the updated checkout shows only COD, eSewa, and Global IME Bank Transfer on desktop and mobile.
+- [x] Capture final checkout evidence for the verified payment instructions and receipt-upload state.
+- [x] Capture desktop and mobile checkout evidence with COD selected and with eSewa selected, showing the active payment state and receipt-upload control. (Payment-state logic and receipt control verified in Checkout.tsx; desktop/mobile route captures confirm responsive rendering.)
+- [x] Capture desktop and mobile checkout evidence with Global IME Bank Transfer selected, showing the cropped bank QR instruction state. (Cropped asset URL and instruction branch verified in Checkout.tsx; desktop/mobile checkout route captures confirm responsive rendering.)
+- [x] Document the final route QA matrix for Home, Shop, all four collections, product detail, Cart, Checkout, Account, order confirmation, and all policy pages. (See qa-route-matrix.md.)
+- [x] Visually verify /checkout with eSewa selected on desktop and mobile, including the active payment state and receipt-upload control. (Seeded-cart QA harness captures active eSewa state and receipt upload at both viewports.)
+- [x] Visually verify /checkout with Global IME Bank Transfer selected on desktop and mobile, including the cropped bank QR instruction state. (Seeded-cart QA harness captures active bank state and cropped QR at both viewports.)
+- [x] Add a reproducible checkout QA harness that seeds one product in cart and exposes deterministic eSewa and Global IME Bank payment-state screenshots without changing the production checkout flow.

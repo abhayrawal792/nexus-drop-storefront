@@ -3,7 +3,7 @@ import { useCart } from "@/contexts/CartContext";
 import { formatNpr } from "@/lib/format";
 import { trpc } from "@/lib/trpc";
 import { CheckCircle2, CreditCard, Loader2, LockKeyhole, QrCode, ReceiptText, ShieldCheck, Truck } from "lucide-react";
-import { ChangeEvent, FormEvent, useState } from "react";
+import { ChangeEvent, FormEvent, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Link, useLocation } from "wouter";
 
@@ -17,6 +17,11 @@ export default function Checkout() {
   const [, setLocation] = useLocation();
   const cart = useCart();
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("COD");
+  useEffect(() => {
+    if (!import.meta.env.DEV) return;
+    const qaPayment = new URLSearchParams(window.location.search).get("qaPayment");
+    if (qaPayment === "eSewa" || qaPayment === "BankTransfer") setPaymentMethod(qaPayment);
+  }, []);
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const uploadReceipt = trpc.store.uploadReceipt.useMutation();
   const checkout = trpc.store.checkout.useMutation({ onSuccess: order => { sessionStorage.setItem("nexus-drop-last-order", JSON.stringify(order)); cart.clearCart(); setLocation("/order-confirmation"); } });

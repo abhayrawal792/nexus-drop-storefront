@@ -10,6 +10,7 @@ import Account from "./pages/Account";
 import Cart from "./pages/Cart";
 import Contact from "./pages/Contact";
 import Checkout from "./pages/Checkout";
+import CheckoutQa from "./pages/CheckoutQa";
 import Home from "./pages/Home";
 import OrderConfirmation from "./pages/OrderConfirmation";
 import Policy from "./pages/Policy";
@@ -27,7 +28,7 @@ function StorefrontRoutes() {
     <Route path="/products/:slug" component={ProductDetail} />
     <Route path="/cart" component={Cart} />
     <Route path="/contact" component={Contact} />
-    <Route path="/checkout" component={Checkout} />
+    {import.meta.env.DEV && <Route path="/__qa/checkout" component={CheckoutQa} />}<Route path="/checkout" component={Checkout} />
     <Route path="/account" component={Account} />
     <Route path="/order-confirmation" component={OrderConfirmation} />
     <Route path="/policies/:policy" component={Policy} />
