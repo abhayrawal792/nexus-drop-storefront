@@ -176,3 +176,7 @@
 - [x] Add recommendation quantity controls beside Quick Add to Cart buttons.
 - [x] Confirm successful recommendation adds show a visual toast notification.
 - [x] Add focused tests, run authorization/TypeScript/build/responsive verification, and save a checkpoint.
+- [x] Add an auto-opening slide-out mini cart drawer after recommendation adds.
+- [x] Add filtered CSV export to the protected admin activity log.
+- [x] Add low-stock warning badges to recommended products using a defined stock threshold.
+- [x] Add focused tests, run authorization/TypeScript/build/responsive verification, and save a checkpoint.

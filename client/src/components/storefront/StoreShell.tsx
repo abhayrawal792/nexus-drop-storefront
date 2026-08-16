@@ -5,7 +5,7 @@ import NexusLogo, { NexusWordmark } from "@/components/storefront/NexusLogo";
 import { formatNpr } from "@/lib/format";
 import { trpc } from "@/lib/trpc";
 import { ArrowRight, Bell, CircleUserRound, Headphones, Heart, Loader2, Menu, Minus, Moon, Plus, Search, ShoppingBag, Sun, Trash2, X } from "lucide-react";
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Link, useLocation } from "wouter";
 
@@ -27,6 +27,7 @@ export default function StoreShell({ children }: { children: React.ReactNode }) 
   const [couponInput, setCouponInput] = useState(cart.couponCode);
   const couponInputData = useMemo(() => ({ code: couponInput, subtotal: cart.subtotal }), [couponInput, cart.subtotal]);
   const couponQuery = trpc.store.coupon.useQuery(couponInputData, { enabled: false, retry: false });
+  useEffect(() => { const openCart = () => setDrawerOpen(true); window.addEventListener("nexus-cart-open", openCart); return () => window.removeEventListener("nexus-cart-open", openCart); }, []);
 
   const submitSearch = (event: FormEvent) => {
     event.preventDefault();
