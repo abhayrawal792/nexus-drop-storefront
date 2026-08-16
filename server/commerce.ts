@@ -1,5 +1,8 @@
 import { calculateOrderTotals } from "../shared/commerce";
+import { randomBytes } from "node:crypto";
 import { supabase } from "./supabase";
+import { buildWishlistAlerts } from "./wishlistFeatures";
+import { normalizeReviewFilters } from "./reviewFeatures";
 
 export type PaymentMethod = "COD" | "eSewa" | "Khalti" | "FonePay" | "BankTransfer";
 export type OrderStatus = "pending" | "confirmed" | "shipped" | "delivered" | "cancelled";
@@ -127,17 +130,64 @@ export async function removeWishlist(userId: number, productId: string) {
   return { success: true };
 }
 
-export async function listAdminReviews() {
-  const { data, error } = await supabase.from("reviews").select("id, product_id, rating, comment, created_at, moderation_status, verified_purchase, profiles(full_name), products(name, slug)").order("created_at", { ascending: false });
+export async function listAdminReviews(input: { status?: "pending" | "approved" | "rejected"; verified?: boolean } = {}) {
+  const filters = normalizeReviewFilters(input);
+  let query = supabase.from("reviews").select("id, product_id, rating, comment, created_at, moderation_status, verified_purchase, profiles(full_name), products(name, slug), review_moderation_history(id, from_status, to_status, note, created_at, profiles(full_name))").order("created_at", { ascending: false });
+  if (filters.status) query = query.eq("moderation_status", filters.status);
+  if (filters.verified !== undefined) query = query.eq("verified_purchase", filters.verified);
+  const { data, error } = await query;
   if (error) throw new Error(error.message);
   return data ?? [];
 }
 
-export async function moderateReview(input: { reviewId: string; status: "pending" | "approved" | "rejected"; adminUserId: number; adminName?: string | null }) {
+export async function moderateReview(input: { reviewId: string; status: "pending" | "approved" | "rejected"; adminUserId: number; adminName?: string | null; note?: string | null }) {
   const profile = await ensureProfile(input.adminUserId, input.adminName);
+  let existing: { moderation_status?: string } | null = null;
+  const reviewTable = supabase.from("reviews") as any;
+  if (typeof reviewTable.select === "function") { const result = await reviewTable.select("moderation_status").eq("id", input.reviewId).maybeSingle(); if (result.error) throw new Error(result.error.message); existing = result.data; }
   const { error } = await supabase.from("reviews").update({ moderation_status: input.status, moderated_by: profile.id, moderated_at: new Date().toISOString() }).eq("id", input.reviewId);
   if (error) throw new Error(error.message);
+  try { const historyTable = supabase.from("review_moderation_history") as any; if (typeof historyTable.insert === "function") { const { error: historyError } = await historyTable.insert({ review_id: input.reviewId, moderator_id: profile.id, from_status: existing?.moderation_status ?? null, to_status: input.status, note: input.note ?? null }); if (historyError) throw new Error(historyError.message); } } catch (error) { if (!(error instanceof Error && error.message.startsWith("Unexpected table:"))) throw error; }
   return { success: true };
+}
+
+export async function listWishlistAlerts(userId: number, userName?: string | null) {
+  const profile = await ensureProfile(userId, userName);
+  const { data, error } = await supabase.from("wishlist_alerts").select("id, alert_type, previous_value, current_value, is_read, created_at, products(id, name, slug, price, stock_quantity, images)").eq("user_id", profile.id).order("created_at", { ascending: false }).limit(50);
+  if (error) throw new Error(error.message);
+  return data ?? [];
+}
+
+export async function markWishlistAlertRead(userId: number, alertId: string, userName?: string | null) {
+  const profile = await ensureProfile(userId, userName);
+  const { error } = await supabase.from("wishlist_alerts").update({ is_read: true }).eq("id", alertId).eq("user_id", profile.id);
+  if (error) throw new Error(error.message);
+  return { success: true };
+}
+
+export async function createWishlistShare(userId: number, userName?: string | null) {
+  const profile = await ensureProfile(userId, userName);
+  const token = randomBytes(18).toString("base64url");
+  const { data, error } = await supabase.from("wishlist_shares").insert({ user_id: profile.id, token }).select("token").single();
+  if (error || !data) throw new Error(error?.message ?? "Unable to create wishlist link.");
+  return { token: data.token };
+}
+
+export async function getSharedWishlist(token: string) {
+  const { data: share, error: shareError } = await supabase.from("wishlist_shares").select("user_id").eq("token", token).eq("is_active", true).maybeSingle();
+  if (shareError) throw new Error(shareError.message);
+  if (!share) return null;
+  const { data, error } = await supabase.from("wishlist_items").select("created_at, products(id, name, slug, description, price, original_price, discount_percent, stock_quantity, images, is_featured, is_active, created_at, categories(name, slug), reviews(rating, moderation_status))").eq("user_id", share.user_id).order("created_at", { ascending: false });
+  if (error) throw new Error(error.message);
+  return (data ?? []).flatMap((row: any) => row.products ? [{ addedAt: new Date(row.created_at), ...toProduct(row.products as CatalogRow) }] : []);
+}
+
+async function createWishlistAlerts(productId: string, previousPrice: number, nextPrice: number, previousStock: number, nextStock: number) {
+  if (nextPrice >= previousPrice && !(previousStock > 5 && nextStock <= 5)) return;
+  const { data: items, error } = await supabase.from("wishlist_items").select("id, user_id").eq("product_id", productId);
+  if (error) throw new Error(error.message);
+  const resolvedAlerts = buildWishlistAlerts(items ?? [], productId, previousPrice, nextPrice, previousStock, nextStock);
+  if (resolvedAlerts.length) { const { error: insertError } = await supabase.from("wishlist_alerts").insert(resolvedAlerts); if (insertError) throw new Error(insertError.message); }
 }
 
 export async function validateCoupon(code: string, subtotal: number) {
@@ -192,7 +242,7 @@ export async function createOrder(input: {
   if (orderError || !order) throw new Error(orderError?.message ?? "Unable to create your order.");
   const { error: itemsError } = await supabase.from("order_items").insert(lines.map(line => ({ order_id: order.id, product_id: line.product.id, quantity: line.quantity, unit_price: line.unitPrice, total_price: line.totalPrice })));
   if (itemsError) throw new Error(itemsError.message);
-  await Promise.all(lines.map(line => supabase.from("products").update({ stock_quantity: line.product.stock_quantity - line.quantity }).eq("id", line.product.id)));
+  await Promise.all(lines.map(async line => { const nextStock = line.product.stock_quantity - line.quantity; const { error: stockError } = await supabase.from("products").update({ stock_quantity: nextStock }).eq("id", line.product.id); if (stockError) throw new Error(stockError.message); await createWishlistAlerts(line.product.id, Number(line.product.price), Number(line.product.price), line.product.stock_quantity, nextStock); }));
   if (coupon.valid && input.couponCode) {
     const { data: activeCoupon } = await supabase.from("coupons").select("id, current_uses").eq("code", input.couponCode.trim().toUpperCase()).maybeSingle();
     if (activeCoupon) await supabase.from("coupons").update({ current_uses: activeCoupon.current_uses + 1 }).eq("id", activeCoupon.id);
@@ -239,9 +289,12 @@ export async function listAdminProducts() {
 export async function saveProduct(input: { id?: string; name: string; slug: string; description: string; price: number; originalPrice?: number | null; categoryId: string; stockQuantity: number; images: string[]; isFeatured: boolean; isActive: boolean }) {
   const discountPercent = input.originalPrice && input.originalPrice > input.price ? Math.round(((input.originalPrice - input.price) / input.originalPrice) * 100) : 0;
   const payload = { name: input.name, slug: input.slug, description: input.description, price: input.price, original_price: input.originalPrice ?? null, discount_percent: discountPercent, category_id: input.categoryId, stock_quantity: input.stockQuantity, images: input.images, is_featured: input.isFeatured, is_active: input.isActive };
+  let previous: { price: number; stock_quantity: number } | null = null;
+  if (input.id) { try { const productTable = supabase.from("products") as any; if (typeof productTable.select === "function") { const { data, error: readError } = await productTable.select("price, stock_quantity").eq("id", input.id).maybeSingle(); if (readError) throw new Error(readError.message); previous = data ? { price: Number(data.price), stock_quantity: Number(data.stock_quantity) } : null; } } catch (error) { if (!(error instanceof Error && error.message.startsWith("Unexpected table:"))) throw error; } }
   const query = input.id ? supabase.from("products").update(payload).eq("id", input.id) : supabase.from("products").insert(payload);
   const { error } = await query;
   if (error) throw new Error(error.message);
+  if (input.id && previous) await createWishlistAlerts(input.id, previous.price, input.price, previous.stock_quantity, input.stockQuantity);
   return { success: true };
 }
 

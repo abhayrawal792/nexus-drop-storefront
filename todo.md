@@ -104,3 +104,12 @@
 - [x] Exercise the wishlist and moderation controls through deterministic QA states, then save a new checkpoint.
 - [x] Refine the development-only admin QA preview into a clearly labeled pending-row layout with metadata placeholders and row-level moderation controls, without inserting or fabricating customer review content.
 - [x] Save a checkpoint after the refined wishlist and review-moderation QA evidence is captured.
+
+- [x] Add real-data wishlist price-drop and low-stock notification records and customer alert UI.
+- [x] Add private shareable wishlist tokens, public read-only wishlist route, and social/copy-link sharing actions.
+- [x] Add admin review-status filters and moderation-history persistence and UI.
+- [x] Add unit coverage for alert generation, share-token access, review filters, and moderation history.
+- [x] Run schema/type/unit/responsive verification and save a checkpoint.
+- [x] Trigger wishlist low-stock alerts when createOrder reduces stock across the low-stock threshold.
+- [x] Add tests for share-token creation/public shared-wishlist access and moderation-history insertion.
+- [x] Save a checkpoint after the completed wishlist alert, shared wishlist, and review-history verification.

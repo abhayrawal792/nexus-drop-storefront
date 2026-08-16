@@ -14,6 +14,7 @@ import CheckoutQa from "./pages/CheckoutQa";
 import Home from "./pages/Home";
 import Wishlist from "./pages/Wishlist";
 import WishlistQa from "./pages/WishlistQa";
+import SharedWishlist from "./pages/SharedWishlist";
 import OrderConfirmation from "./pages/OrderConfirmation";
 import Policy from "./pages/Policy";
 import ProductDetail from "./pages/ProductDetail";
@@ -33,6 +34,7 @@ function StorefrontRoutes() {
     {import.meta.env.DEV && <Route path="/__qa/checkout" component={CheckoutQa} />}{import.meta.env.DEV && <Route path="/__qa/wishlist" component={WishlistQa} />}<Route path="/checkout" component={Checkout} />
     <Route path="/account" component={Account} />
     <Route path="/wishlist" component={Wishlist} />
+    <Route path="/shared-wishlist/:token" component={SharedWishlist} />
     <Route path="/order-confirmation" component={OrderConfirmation} />
     <Route path="/policies/:policy" component={Policy} />
     <Route path="/404" component={NotFound} />
