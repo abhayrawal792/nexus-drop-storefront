@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { normalizeRestockEmail } from "./commerce";
+import { buildRestockEmail, normalizeRestockEmail } from "./commerce";
 
 describe("restock notification validation", () => {
   it("normalizes valid emails", () => {
@@ -9,5 +9,12 @@ describe("restock notification validation", () => {
   it("rejects malformed emails", () => {
     expect(normalizeRestockEmail("not-an-email")).toBeNull();
     expect(normalizeRestockEmail("shopper@example")).toBeNull();
+  });
+
+  it("builds a back-in-stock email payload", () => {
+    const message = buildRestockEmail("Black Roll-Top Backpack");
+    expect(message.subject).toContain("Black Roll-Top Backpack");
+    expect(message.text).toContain("back in stock");
+    expect(message.html).toContain("Black Roll-Top Backpack");
   });
 });

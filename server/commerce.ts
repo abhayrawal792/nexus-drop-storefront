@@ -390,7 +390,10 @@ export async function saveProduct(input: { id?: string; name: string; slug: stri
   const query = input.id ? supabase.from("products").update(payload).eq("id", input.id) : supabase.from("products").insert(payload);
   const { error } = await query;
   if (error) throw new Error(error.message);
-  if (input.id && previous) await createWishlistAlerts(input.id, previous.price, input.price, previous.stock_quantity, input.stockQuantity);
+  if (input.id && previous) {
+    await createWishlistAlerts(input.id, previous.price, input.price, previous.stock_quantity, input.stockQuantity);
+    if (previous.stock_quantity === 0 && input.stockQuantity > 0) await sendPendingRestockNotifications(input.id, input.name);
+  }
   if (input.adminUserId) {
     let productId = input.id ?? null;
     if (!productId) { const { data: created } = await supabase.from("products").select("id").eq("slug", input.slug).maybeSingle(); productId = created?.id ?? null; }
@@ -414,6 +417,35 @@ export async function requestRestock(input: { productId: string; email: string; 
   const { error } = await supabase.from("restock_requests").upsert({ product_id: input.productId, email, status: "pending", updated_at: new Date().toISOString() }, { onConflict: "product_id,email" });
   if (error) throw new Error(error.message);
   return { success: true, productName: product.name };
+}
+
+export function buildRestockEmail(productName: string) {
+  return {
+    subject: `${productName} is back at Nexus Drop`,
+    text: `Good news: ${productName} is back in stock at Nexus Drop. Visit the store to shop the latest drop.`,
+    html: `<div style="font-family:Arial,sans-serif;line-height:1.6;color:#101821"><h2>${productName} is back in stock</h2><p>Your requested item is available again at Nexus Drop.</p><p>Visit the store to shop the latest drop.</p></div>`,
+  };
+}
+
+export async function sendPendingRestockNotifications(productId: string, productName: string) {
+  const apiKey = process.env.RESEND_API_KEY;
+  const from = process.env.RESEND_FROM_EMAIL;
+  if (!apiKey || !from) return { sent: 0, skipped: true };
+  const { data: requests, error } = await supabase.from("restock_requests").select("id, email").eq("product_id", productId).eq("status", "pending").limit(500);
+  if (error) throw new Error(error.message);
+  const email = buildRestockEmail(productName);
+  let sent = 0;
+  for (const request of requests ?? []) {
+    const response = await fetch("https://api.resend.com/emails", { method: "POST", headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json", "Idempotency-Key": `nexus-restock-${request.id}` }, body: JSON.stringify({ from, to: request.email, subject: email.subject, text: email.text, html: email.html }) });
+    const result = await response.json().catch(() => ({}));
+    if (response.ok) {
+      await supabase.from("restock_requests").update({ status: "sent", sent_at: new Date().toISOString(), provider_message_id: result.id ?? null, updated_at: new Date().toISOString(), last_error: null }).eq("id", request.id);
+      sent += 1;
+    } else {
+      await supabase.from("restock_requests").update({ status: "failed", last_error: `Resend ${response.status}: ${result.message ?? "Email delivery failed"}`, updated_at: new Date().toISOString() }).eq("id", request.id);
+    }
+  }
+  return { sent, skipped: false };
 }
 
 export async function getPaymentProofUrl(orderId: string) {

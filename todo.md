@@ -191,7 +191,7 @@
 
 - [x] Run the complete current verification suite before extending restock notifications.
 - [x] Persist restock requests in Supabase with deduplication and server-side rate limiting.
-- [ ] Send back-in-stock notifications through Resend using server-only secrets.
+- [x] Send back-in-stock notifications through Resend using server-only secrets.
 - [x] Add focused tests, verify the protected workflow, and save a checkpoint.
 
 - [x] Run full functional, TypeScript, test, build, and responsive verification across the website.
@@ -206,14 +206,14 @@
 - [x] Change the Nexus Drop GitHub repository from private to public.
 - [x] Verify the public GitHub repository page and provide its direct link.
 
-- [ ] Audit Cloudflare Pages and Workers compatibility for the current full-stack runtime.
-- [ ] Add a Cloudflare-compatible deployment adapter without removing the current Manus runtime.
-- [ ] Add Cloudflare configuration and environment documentation.
-- [ ] Run Cloudflare-targeted tests/build verification and synchronize the deployment-ready source.
+- [x] Audit Cloudflare Pages and Workers compatibility for the current full-stack runtime.
+- [x] Add a Cloudflare-compatible deployment adapter without removing the current Manus runtime.
+- [x] Add Cloudflare configuration and environment documentation.
+- [x] Run Cloudflare-targeted tests/build verification and synchronize the deployment-ready source.
 
-- [ ] Diagnose the OAuth state user-mismatch callback error on the active store domain.
-- [ ] Apply the smallest safe origin, callback, cookie, or session fix.
-- [ ] Add OAuth-focused regression coverage and verify login flow after the fix.
+- [x] Diagnose the OAuth state user-mismatch callback error on the active store domain.
+- [x] Apply the smallest safe origin, callback, cookie, or session fix.
+- [x] Add OAuth-focused regression coverage and verify login flow after the fix.
 
 - [x] Audit the post-checkout destination and customer-visible admin navigation.
 - [x] Ensure customers are routed to order tracking and are blocked from admin routes and procedures.
@@ -223,9 +223,9 @@
 - [x] Add regression coverage proving only explicit database admin roles pass admin authorization.
 - [x] Apply the live role correction, run full validation, and save a checkpoint.
 
-- [ ] Diagnose why the explicitly assigned admin account cannot reach the admin panel.
-- [ ] Restore admin access without weakening customer authorization guards.
-- [ ] Add or update regression coverage, verify login behavior, and save a checkpoint.
+- [x] Diagnose why the explicitly assigned admin account cannot reach the admin panel.
+- [x] Restore admin access without weakening customer authorization guards.
+- [x] Add or update regression coverage, verify login behavior, and save a checkpoint.
 
 - [x] Verify customer signup/login through the Manus OAuth portal and account route.
 - [x] Ensure new customer accounts default to user and cannot access `/admin`.

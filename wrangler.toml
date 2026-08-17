@@ -1,0 +1,11 @@
+name = "nexus-drop-storefront"
+main = "cloudflare/worker.ts"
+compatibility_date = "2026-08-17"
+
+[assets]
+directory = "./dist/public"
+not_found_handling = "single-page-application"
+run_worker_first = ["/api/*"]
+
+# Set BACKEND_ORIGIN in the Cloudflare dashboard or with Wrangler before deploy.
+# Example: https://your-render-service.onrender.com
