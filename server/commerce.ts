@@ -14,6 +14,10 @@ export function normalizeRestockEmail(value: string) {
   const email = value.trim().toLowerCase();
   return /^\S+@\S+\.\S+$/.test(email) ? email : null;
 }
+
+export function isManageableRestockStatus(status: string) {
+  return status === "pending" || status === "failed";
+}
 export type OrderStatus = "pending" | "confirmed" | "shipped" | "delivered" | "cancelled";
 export type PaymentStatus = "pending" | "verified" | "failed";
 
@@ -182,6 +186,43 @@ export async function listWishlistAlerts(userId: number, userName?: string | nul
   const { data, error } = await supabase.from("wishlist_alerts").select("id, alert_type, previous_value, current_value, is_read, created_at, products(id, name, slug, price, stock_quantity, images)").eq("user_id", profile.id).order("created_at", { ascending: false }).limit(50);
   if (error) throw new Error(error.message);
   return data ?? [];
+}
+
+export async function listCustomerRestockRequests(userId: number, email: string, userName?: string | null) {
+  const normalizedEmail = normalizeRestockEmail(email);
+  if (!normalizedEmail) throw new Error("A valid customer email is required.");
+  await ensureProfile(userId, userName);
+  const { data, error } = await supabase.from("restock_requests").select("id, email, status, requested_at, updated_at, products(id, name, slug, price, stock_quantity, images)").eq("email", normalizedEmail).in("status", ["pending", "failed"]).order("requested_at", { ascending: false }).limit(50);
+  if (error) throw new Error(error.message);
+  return (data ?? []).map((row: any) => ({ id: row.id, email: row.email, status: row.status, requestedAt: new Date(row.requested_at), updatedAt: new Date(row.updated_at), product: Array.isArray(row.products) ? row.products[0] : row.products }));
+}
+
+export async function cancelCustomerRestockRequest(userId: number, email: string, requestId: string, userName?: string | null) {
+  const normalizedEmail = normalizeRestockEmail(email);
+  if (!normalizedEmail) throw new Error("A valid customer email is required.");
+  await ensureProfile(userId, userName);
+  const { error } = await supabase.from("restock_requests").update({ status: "cancelled", updated_at: new Date().toISOString() }).eq("id", requestId).eq("email", normalizedEmail).in("status", ["pending", "failed"]);
+  if (error) throw new Error(error.message);
+  return { success: true };
+}
+
+export async function getCustomerEmailPreferences(userId: number, email: string, userName?: string | null) {
+  const normalizedEmail = normalizeRestockEmail(email);
+  if (!normalizedEmail) throw new Error("A valid customer email is required.");
+  const profile = await ensureProfile(userId, userName);
+  const { data, error } = await supabase.from("customer_email_preferences").upsert({ profile_id: profile.id, email: normalizedEmail }, { onConflict: "profile_id" }).select("email, alert_emails_enabled, updated_at").single();
+  if (error || !data) throw new Error(error?.message ?? "Unable to load email preferences.");
+  return { email: data.email, alertEmailsEnabled: Boolean(data.alert_emails_enabled), updatedAt: new Date(data.updated_at) };
+}
+
+export async function updateCustomerEmailPreferences(userId: number, email: string, alertEmailsEnabled: boolean, userName?: string | null) {
+  const normalizedEmail = normalizeRestockEmail(email);
+  if (!normalizedEmail) throw new Error("A valid customer email is required.");
+  const profile = await ensureProfile(userId, userName);
+  const { data, error } = await supabase.from("customer_email_preferences").upsert({ profile_id: profile.id, email: normalizedEmail, alert_emails_enabled: alertEmailsEnabled, updated_at: new Date().toISOString() }, { onConflict: "profile_id" }).select("email, alert_emails_enabled, updated_at").single();
+  if (error || !data) throw new Error(error?.message ?? "Unable to update email preferences.");
+  if (!alertEmailsEnabled) await supabase.from("restock_requests").update({ status: "cancelled", updated_at: new Date().toISOString() }).eq("email", normalizedEmail).eq("status", "pending");
+  return { email: data.email, alertEmailsEnabled: Boolean(data.alert_emails_enabled), updatedAt: new Date(data.updated_at) };
 }
 
 export async function markWishlistAlertRead(userId: number, alertId: string, userName?: string | null) {
@@ -405,6 +446,8 @@ export async function saveProduct(input: { id?: string; name: string; slug: stri
 export async function requestRestock(input: { productId: string; email: string; ipAddress: string }) {
   const email = normalizeRestockEmail(input.email);
   if (!email) throw new Error("Enter a valid email address.");
+  const { data: preference } = await supabase.from("customer_email_preferences").select("alert_emails_enabled").eq("email", email).maybeSingle();
+  if (preference && !preference.alert_emails_enabled) throw new Error("Email alerts are disabled in your settings.");
   const { data: product, error: productError } = await supabase.from("products").select("id, name, is_active, stock_quantity").eq("id", input.productId).maybeSingle();
   if (productError) throw new Error(productError.message);
   if (!product || !product.is_active) throw new Error("This product is no longer available.");

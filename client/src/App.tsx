@@ -9,6 +9,7 @@ import StoreShell from "./components/storefront/StoreShell";
 import { CartProvider } from "./contexts/CartContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Account from "./pages/Account";
+import AccountSettings from "./pages/AccountSettings";
 import Cart from "./pages/Cart";
 import Contact from "./pages/Contact";
 import Checkout from "./pages/Checkout";
@@ -35,6 +36,7 @@ function StorefrontRoutes() {
     <Route path="/contact" component={Contact} />
     {import.meta.env.DEV && <Route path="/__qa/checkout" component={CheckoutQa} />}{import.meta.env.DEV && <Route path="/__qa/wishlist" component={WishlistQa} />}<Route path="/checkout" component={Checkout} />
     <Route path="/account" component={Account} />
+    <Route path="/account/settings" component={AccountSettings} />
     <Route path="/wishlist" component={Wishlist} />
     <Route path="/shared-wishlist/:token" component={SharedWishlist} />
     <Route path="/order-confirmation" component={OrderConfirmation} />

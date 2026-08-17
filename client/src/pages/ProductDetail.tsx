@@ -455,9 +455,10 @@ export default function ProductDetail() {
                   {item.stockQuantity === 0 ? (
                     <div className="mx-3 mb-3">
                       {restockRequests[item.id] ? (
-                        <p className="rounded-lg border border-cyan-300/20 bg-cyan-300/10 px-3 py-2 text-center text-[11px] font-bold text-cyan-300">
-                          Restock alert requested
-                        </p>
+                                                  <p role="status" className="rounded-lg border border-cyan-300/20 bg-cyan-300/10 px-3 py-2 text-center text-[11px] font-bold text-cyan-300">
+                            Restock alert requested — we’ll email you when it’s back.
+                          </p>
+
                       ) : notifyProductId === item.id ? (
                         <form
                           onSubmit={event => submitRestockRequest(event, item)}
@@ -479,7 +480,7 @@ export default function ProductDetail() {
                             disabled={requestRestock.isPending}
                             className="h-9 shrink-0 rounded-lg bg-cyan-400 px-2 text-[10px] font-black text-[#061014] disabled:opacity-60"
                           >
-                            {requestRestock.isPending ? "…" : "Send"}
+                            {requestRestock.isPending ? <><Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />Sending…</> : <><Check className="mr-1.5 h-3.5 w-3.5" />Send</>}
                           </button>
                         </form>
                       ) : (

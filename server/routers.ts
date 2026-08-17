@@ -3,7 +3,7 @@ import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { adminProcedure, protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import { systemRouter } from "./_core/systemRouter";
-import { addWishlist, createCustomerAddress, createOrder, createReview, createWishlistShare, deleteCustomerAddress, getAdminAnalytics, getAdminStats, getPaymentProofUrl, getProduct, getProductRecommendations, getSharedWishlist, getUserOrders, listAdminOrders, listAdminProducts, listAdminReviews, listCategories, listCoupons, listCustomerAddresses, listProducts, listReviews, listWishlist, listWishlistAlerts, listWishlistShares, listProductActivity, markWishlistAlertRead, moderateReview, removeWishlist, requestRestock, revokeWishlistShare, saveCoupon, saveProduct, setDefaultCustomerAddress, updateCustomerAddress, updateWishlistShare, updateOrder, uploadPaymentProof, uploadProductImage, validateCoupon } from "./commerce";
+import { addWishlist, cancelCustomerRestockRequest, createCustomerAddress, createOrder, createReview, createWishlistShare, deleteCustomerAddress, getAdminAnalytics, getAdminStats, getCustomerEmailPreferences, getPaymentProofUrl, getProduct, getProductRecommendations, getSharedWishlist, getUserOrders, listAdminOrders, listAdminProducts, listAdminReviews, listCategories, listCoupons, listCustomerAddresses, listCustomerRestockRequests, listProducts, listReviews, listWishlist, listWishlistAlerts, listWishlistShares, listProductActivity, markWishlistAlertRead, moderateReview, removeWishlist, requestRestock, revokeWishlistShare, saveCoupon, saveProduct, setDefaultCustomerAddress, updateCustomerAddress, updateCustomerEmailPreferences, updateWishlistShare, updateOrder, uploadPaymentProof, uploadProductImage, validateCoupon } from "./commerce";
 
 const itemSchema = z.object({ productId: z.string().uuid(), quantity: z.number().int().min(1).max(10) });
 const orderSchema = z.object({
@@ -50,6 +50,10 @@ export const appRouter = router({
     checkout: publicProcedure.input(orderSchema).mutation(({ input, ctx }) => createOrder({ ...input, userId: ctx.user?.id, userName: ctx.user?.name })),
     submitReview: protectedProcedure.input(z.object({ productId: z.string().uuid(), rating: z.number().int().min(1).max(5), comment: z.string().min(4).max(800) })).mutation(({ input, ctx }) => createReview({ ...input, userId: ctx.user.id, userName: ctx.user.name, rating: input.rating, comment: input.comment })),
     accountOrders: protectedProcedure.query(({ ctx }) => getUserOrders(ctx.user.id, ctx.user.name)),
+    restockAlerts: protectedProcedure.query(({ ctx }) => listCustomerRestockRequests(ctx.user.id, ctx.user.email ?? "", ctx.user.name)),
+    cancelRestockAlert: protectedProcedure.input(z.object({ requestId: z.string().uuid() })).mutation(({ input, ctx }) => cancelCustomerRestockRequest(ctx.user.id, ctx.user.email ?? "", input.requestId, ctx.user.name)),
+    emailPreferences: protectedProcedure.query(({ ctx }) => getCustomerEmailPreferences(ctx.user.id, ctx.user.email ?? "", ctx.user.name)),
+    updateEmailPreferences: protectedProcedure.input(z.object({ alertEmailsEnabled: z.boolean() })).mutation(({ input, ctx }) => updateCustomerEmailPreferences(ctx.user.id, ctx.user.email ?? "", input.alertEmailsEnabled, ctx.user.name)),
     customerAddresses: protectedProcedure.query(({ ctx }) => listCustomerAddresses(ctx.user.id, ctx.user.name)),
     createCustomerAddress: protectedProcedure.input(customerAddressSchema).mutation(({ input, ctx }) => createCustomerAddress(ctx.user.id, input, ctx.user.name)),
     updateCustomerAddress: protectedProcedure.input(z.object({ addressId: z.string().uuid(), data: customerAddressSchema })).mutation(({ input, ctx }) => updateCustomerAddress(ctx.user.id, input.addressId, input.data, ctx.user.name)),

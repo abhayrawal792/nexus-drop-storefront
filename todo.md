@@ -246,3 +246,8 @@
 - [x] Integrate saved addresses into checkout
 - [x] Verify restock persistence and email notification backend
 - [x] Run tests, typecheck, build, responsive verification, and sync public GitHub source
+
+- [x] Add customer dashboard management for active back-in-stock alerts
+- [x] Add loading spinner and success toast feedback for Notify Me submissions
+- [x] Add customer email-preference settings with alert unsubscribe controls
+- [x] Add alert-management and preference tests, responsive verification, GitHub sync, and checkpoint
