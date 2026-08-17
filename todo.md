@@ -230,3 +230,7 @@
 - [x] Verify customer signup/login through the Manus OAuth portal and account route.
 - [x] Ensure new customer accounts default to user and cannot access `/admin`.
 - [x] Verify customer order history privacy and admin separation with tests and preview checks.
+
+- [x] Audit free OTP options against the existing Manus and Supabase authentication setup.
+- [x] Add customer OTP login/create-account flow without changing manual admin role assignment.
+- [x] Add OTP validation and role-separation tests, run full verification, and save a checkpoint.
