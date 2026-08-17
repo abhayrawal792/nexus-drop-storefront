@@ -190,9 +190,9 @@
 - [x] Add focused tests, run TypeScript/build/responsive verification, and save a checkpoint.
 
 - [x] Run the complete current verification suite before extending restock notifications.
-- [ ] Persist restock requests in Supabase with deduplication and server-side rate limiting.
+- [x] Persist restock requests in Supabase with deduplication and server-side rate limiting.
 - [ ] Send back-in-stock notifications through Resend using server-only secrets.
-- [ ] Add focused tests, verify the protected workflow, and save a checkpoint.
+- [x] Add focused tests, verify the protected workflow, and save a checkpoint.
 
 - [x] Run full functional, TypeScript, test, build, and responsive verification across the website.
 - [x] Repair any confirmed website issue discovered during verification.
@@ -245,4 +245,4 @@
 - [x] Expand customer account into dashboard with wishlist and address book
 - [x] Integrate saved addresses into checkout
 - [x] Verify restock persistence and email notification backend
-- [ ] Run tests, typecheck, build, responsive verification, and sync public GitHub source
+- [x] Run tests, typecheck, build, responsive verification, and sync public GitHub source
