@@ -271,3 +271,7 @@
 - [x] Add failed-alert detail modal with exact provider error message
 - [x] Add CSV export for the filtered delivery-failure queue
 - [x] Add tests, responsive verification, GitHub sync, and checkpoint
+
+- [ ] Verify complete frontend, backend, migrations, configuration, and tests are present in GitHub
+- [ ] Push any remaining source changes to the public repositories
+- [ ] Provide repository and download links for future use
