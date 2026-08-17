@@ -222,3 +222,11 @@
 - [x] Remove automatic owner-based admin promotion from user upsert logic.
 - [x] Add regression coverage proving only explicit database admin roles pass admin authorization.
 - [x] Apply the live role correction, run full validation, and save a checkpoint.
+
+- [ ] Diagnose why the explicitly assigned admin account cannot reach the admin panel.
+- [ ] Restore admin access without weakening customer authorization guards.
+- [ ] Add or update regression coverage, verify login behavior, and save a checkpoint.
+
+- [x] Verify customer signup/login through the Manus OAuth portal and account route.
+- [x] Ensure new customer accounts default to user and cannot access `/admin`.
+- [x] Verify customer order history privacy and admin separation with tests and preview checks.
