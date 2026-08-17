@@ -203,8 +203,8 @@
 - [x] Replace mismatched catalog visuals with relevant product images and update the storefront data.
 - [x] Verify the image corrections across desktop and mobile shop and product-detail pages.
 
-- [ ] Change the Nexus Drop GitHub repository from private to public.
-- [ ] Verify the public GitHub repository page and provide its direct link.
+- [x] Change the Nexus Drop GitHub repository from private to public.
+- [x] Verify the public GitHub repository page and provide its direct link.
 
 - [ ] Audit Cloudflare Pages and Workers compatibility for the current full-stack runtime.
 - [ ] Add a Cloudflare-compatible deployment adapter without removing the current Manus runtime.
@@ -215,6 +215,10 @@
 - [ ] Apply the smallest safe origin, callback, cookie, or session fix.
 - [ ] Add OAuth-focused regression coverage and verify login flow after the fix.
 
-- [ ] Audit the post-checkout destination and customer-visible admin navigation.
-- [ ] Ensure customers are routed to order tracking and are blocked from admin routes and procedures.
-- [ ] Add regression tests and verify customer/admin flows, build, and responsive behavior.
+- [x] Audit the post-checkout destination and customer-visible admin navigation.
+- [x] Ensure customers are routed to order tracking and are blocked from admin routes and procedures.
+- [x] Add regression tests and verify customer/admin flows, build, and responsive behavior.
+
+- [ ] Remove automatic owner-based admin promotion from user upsert logic.
+- [ ] Add regression coverage proving only explicit database admin roles pass admin authorization.
+- [ ] Apply the live role correction, run full validation, and save a checkpoint.
