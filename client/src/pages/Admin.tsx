@@ -2,7 +2,7 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { startLogin } from "@/const";
 import DashboardLayout from "@/components/DashboardLayout";
 import { formatDate, formatNpr } from "@/lib/format";
-import { buildAnalyticsCsv } from "@/lib/analyticsExport";
+import { buildAnalyticsCsv, buildRestockFailureCsv } from "@/lib/analyticsExport";
 import { getAnalyticsQuickRange } from "@/lib/analyticsRanges";
 import { buildActivityCsv } from "@/lib/activityExport";
 import { trpc } from "@/lib/trpc";
@@ -25,6 +25,8 @@ import {
   Tag,
   Truck,
   X,
+  Eye,
+  History,
 } from "lucide-react";
 import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -144,6 +146,7 @@ function AdminWorkspace() {
   const [failureType, setFailureType] = useState<"" | "provider" | "invalid_recipient" | "temporary" | "unknown">("");
   const [failureProductId, setFailureProductId] = useState("");
   const [selectedFailureIds, setSelectedFailureIds] = useState<string[]>([]);
+  const [selectedFailure, setSelectedFailure] = useState<any | null>(null);
   const utils = trpc.useUtils();
   const { data: stats } = trpc.admin.stats.useQuery();
   const { data: analytics } = trpc.admin.analytics.useQuery({
@@ -400,6 +403,8 @@ function AdminWorkspace() {
             setFailureType={setFailureType}
             setFailureProductId={setFailureProductId}
             setSelectedFailureIds={setSelectedFailureIds}
+            selectedFailure={selectedFailure}
+            setSelectedFailure={setSelectedFailure}
             setAnalyticsFrom={setAnalyticsFrom}
             setAnalyticsTo={setAnalyticsTo}
             onQuickRange={setAnalyticsRange}
@@ -553,6 +558,8 @@ function Overview({
   setFailureType,
   setFailureProductId,
   setSelectedFailureIds,
+  selectedFailure,
+  setSelectedFailure,
   setAnalyticsFrom,
   setAnalyticsTo,
   onQuickRange,
@@ -592,6 +599,8 @@ function Overview({
   setFailureType: (value: "" | "provider" | "invalid_recipient" | "temporary" | "unknown") => void;
   setFailureProductId: (value: string) => void;
   setSelectedFailureIds: (value: string[] | ((current: string[]) => string[])) => void;
+  selectedFailure: any | null;
+  setSelectedFailure: (value: any | null) => void;
   setAnalyticsFrom: (value: string) => void;
   setAnalyticsTo: (value: string) => void;
   onQuickRange: (range: "last7" | "this-month") => void;
@@ -645,6 +654,7 @@ function Overview({
   ];
   const retryFailure = trpc.admin.retryRestockFailure.useMutation({ onSuccess: result => { toast.success(result.sent ? "Alert email retried successfully" : "Alert queued for retry"); }, onError: error => toast.error(error.message) });
   const retryFailures = trpc.admin.retryRestockFailures.useMutation({ onSuccess: result => { toast.success(`${result.sent} alert${result.sent === 1 ? "" : "s"} retried${result.skipped ? ` · ${result.skipped} skipped` : ""}`); setSelectedFailureIds([]); }, onError: error => toast.error(error.message) });
+  const downloadFailureCsv = () => { const csv = buildRestockFailureCsv(analytics?.restockFailures ?? []); const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" })); const link = document.createElement("a"); link.href = url; link.download = `restock-failures-${new Date().toISOString().slice(0, 10)}.csv`; link.click(); URL.revokeObjectURL(url); };
   return (
     <section className="mt-7">
       <div className="mb-5 flex flex-col gap-3 rounded-2xl border border-white/8 bg-[#101821] p-4 sm:flex-row sm:items-end sm:justify-between">
@@ -851,9 +861,11 @@ function Overview({
       </div>
       <div className="mt-7 rounded-3xl border border-red-300/15 bg-[#101821] p-5">
         <div className="flex items-start justify-between gap-4"><div><h2 className="font-black text-white">Email delivery failures</h2><p className="mt-1 text-xs text-slate-500">Bounced or undelivered back-in-stock alerts in the selected window.</p></div><ShieldAlert className="h-5 w-5 text-red-300" /></div>
-        <div className="mt-4 flex flex-wrap items-center gap-2"><select value={failureType} onChange={event => setFailureType(event.target.value as typeof failureType)} className="rounded-lg border border-white/10 bg-[#0A0A0A] px-2 py-1.5 text-xs text-slate-300" aria-label="Filter delivery failure type"><option value="">All error types</option><option value="provider">Provider / bounce</option><option value="invalid_recipient">Invalid recipient</option><option value="temporary">Temporary failure</option><option value="unknown">Unknown</option></select><select value={failureProductId} onChange={event => setFailureProductId(event.target.value)} className="rounded-lg border border-white/10 bg-[#0A0A0A] px-2 py-1.5 text-xs text-slate-300" aria-label="Filter delivery failures by product"><option value="">All failed products</option>{products.map(product => <option key={product.id} value={product.id}>{product.name}</option>)}</select><button type="button" onClick={() => setSelectedFailureIds((analytics?.restockFailures ?? []).map((failure: any) => failure.id))} className="rounded-lg border border-white/10 px-3 py-1.5 text-xs font-bold text-slate-300 hover:border-cyan-300/40">Select visible</button><button type="button" disabled={!selectedFailureIds.length || retryFailures.isPending} onClick={() => retryFailures.mutate({ requestIds: selectedFailureIds })} className="rounded-lg bg-cyan-400 px-3 py-1.5 text-xs font-black text-[#061014] disabled:opacity-50">Retry selected ({selectedFailureIds.length})</button></div>
-        {analytics?.restockFailures?.length ? <div className="mt-4 divide-y divide-white/8">{analytics.restockFailures.map((failure: any) => <div key={failure.id} className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center"><input type="checkbox" checked={selectedFailureIds.includes(failure.id)} onChange={event => setSelectedFailureIds(current => event.target.checked ? [...current, failure.id] : current.filter(id => id !== failure.id))} aria-label={`Select failed alert for ${failure.productName}`} className="h-4 w-4 accent-cyan-400" /><div className="min-w-0 flex-1"><div className="flex items-center gap-2"><p className="truncate text-sm font-bold text-white">{failure.productName}</p><span className="rounded-full bg-red-300/10 px-2 py-0.5 text-[10px] font-black uppercase text-red-300">{failure.errorType}</span></div><p className="mt-1 text-xs text-slate-500">{failure.email}{failure.categoryName ? ` · ${failure.categoryName}` : ""}</p><p className="mt-1 text-xs text-red-300">{failure.error}</p></div><button type="button" disabled={retryFailure.isPending} onClick={() => retryFailure.mutate({ requestId: failure.id })} className="rounded-lg border border-cyan-300/30 px-3 py-2 text-xs font-black text-cyan-300 hover:bg-cyan-300/10 disabled:opacity-50">Retry delivery</button></div>)}</div> : <p className="mt-4 text-sm text-emerald-300">No failed alert deliveries in this date range.</p>}
+        <div className="mt-4 flex flex-wrap items-center gap-2"><select value={failureType} onChange={event => setFailureType(event.target.value as typeof failureType)} className="rounded-lg border border-white/10 bg-[#0A0A0A] px-2 py-1.5 text-xs text-slate-300" aria-label="Filter delivery failure type"><option value="">All error types</option><option value="provider">Provider / bounce</option><option value="invalid_recipient">Invalid recipient</option><option value="temporary">Temporary failure</option><option value="unknown">Unknown</option></select><select value={failureProductId} onChange={event => setFailureProductId(event.target.value)} className="rounded-lg border border-white/10 bg-[#0A0A0A] px-2 py-1.5 text-xs text-slate-300" aria-label="Filter delivery failures by product"><option value="">All failed products</option>{products.map(product => <option key={product.id} value={product.id}>{product.name}</option>)}</select><button type="button" onClick={downloadFailureCsv} disabled={!analytics?.restockFailures?.length} className="inline-flex items-center gap-1 rounded-lg border border-cyan-300/30 px-3 py-1.5 text-xs font-bold text-cyan-300 disabled:opacity-50"><Download className="h-3.5 w-3.5" /> Export CSV</button><button type="button" onClick={() => setSelectedFailureIds((analytics?.restockFailures ?? []).map((failure: any) => failure.id))} className="rounded-lg border border-white/10 px-3 py-1.5 text-xs font-bold text-slate-300 hover:border-cyan-300/40">Select visible</button><button type="button" disabled={!selectedFailureIds.length || retryFailures.isPending} onClick={() => retryFailures.mutate({ requestIds: selectedFailureIds })} className="rounded-lg bg-cyan-400 px-3 py-1.5 text-xs font-black text-[#061014] disabled:opacity-50">Retry selected ({selectedFailureIds.length})</button></div>
+        {analytics?.restockFailures?.length ? <div className="mt-4 divide-y divide-white/8">{analytics.restockFailures.map((failure: any) => <div key={failure.id} className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center"><input type="checkbox" checked={selectedFailureIds.includes(failure.id)} onChange={event => setSelectedFailureIds(current => event.target.checked ? [...current, failure.id] : current.filter(id => id !== failure.id))} aria-label={`Select failed alert for ${failure.productName}`} className="h-4 w-4 accent-cyan-400" /><div className="min-w-0 flex-1"><div className="flex items-center gap-2"><p className="truncate text-sm font-bold text-white">{failure.productName}</p><span className="rounded-full bg-red-300/10 px-2 py-0.5 text-[10px] font-black uppercase text-red-300">{failure.errorType}</span></div><p className="mt-1 text-xs text-slate-500">{failure.email}{failure.categoryName ? ` · ${failure.categoryName}` : ""}</p><p className="mt-1 text-xs text-red-300">{failure.error}</p></div><div className="flex flex-wrap gap-2"><button type="button" onClick={() => setSelectedFailure(failure)} className="inline-flex items-center gap-1 rounded-lg border border-white/10 px-3 py-2 text-xs font-black text-slate-300 hover:border-cyan-300/40"><Eye className="h-3.5 w-3.5" /> Details</button><button type="button" disabled={retryFailure.isPending} onClick={() => retryFailure.mutate({ requestId: failure.id })} className="rounded-lg border border-cyan-300/30 px-3 py-2 text-xs font-black text-cyan-300 hover:bg-cyan-300/10 disabled:opacity-50">Retry delivery</button></div></div>)}</div> : <p className="mt-4 text-sm text-emerald-300">No failed alert deliveries in this date range.</p>}
       </div>
+      <div className="mt-7 rounded-3xl border border-white/8 bg-[#101821] p-5"><div className="flex items-start justify-between gap-4"><div><h2 className="font-black text-white">Retry audit history</h2><p className="mt-1 text-xs text-slate-500">Every retry initiated for the currently filtered failed alerts.</p></div><History className="h-5 w-5 text-cyan-300" /></div>{analytics?.retryAudit?.length ? <div className="mt-4 divide-y divide-white/8">{analytics.retryAudit.map((audit: any) => <div key={audit.id} className="grid gap-2 py-3 text-xs sm:grid-cols-[1fr_auto_auto] sm:items-center"><div><p className="font-bold text-white">{audit.administrator}</p><p className="text-slate-500">{audit.action === "bulk_retry" ? "Bulk retry" : "Single retry"} · {new Date(audit.attemptedAt).toLocaleString()}</p></div><span className="text-slate-400">{audit.sentCount} sent · {audit.skippedCount} skipped</span><span className="text-slate-500">{audit.attemptedCount} attempted</span>{audit.providerError ? <p className="text-red-300 sm:col-span-3">{audit.providerError}</p> : null}</div>)}</div> : <p className="mt-4 text-sm text-slate-500">No retries recorded for the current filtered failures.</p>}</div>
+      {selectedFailure ? <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" role="dialog" aria-modal="true" aria-labelledby="failed-alert-detail-title"><div className="w-full max-w-lg rounded-3xl border border-white/10 bg-[#101821] p-6 shadow-2xl"><div className="flex items-start justify-between gap-4"><div><p className="text-[10px] font-black uppercase tracking-[.14em] text-red-300">Delivery failure detail</p><h2 id="failed-alert-detail-title" className="mt-1 text-xl font-black text-white">{selectedFailure.productName}</h2></div><button type="button" onClick={() => setSelectedFailure(null)} aria-label="Close failure details" className="rounded-lg p-2 text-slate-400 hover:bg-white/5 hover:text-white"><X className="h-5 w-5" /></button></div><div className="mt-5 space-y-3 text-sm"><div><p className="text-xs font-bold uppercase tracking-wide text-slate-500">Recipient</p><p className="mt-1 text-slate-200">{selectedFailure.email}</p></div><div><p className="text-xs font-bold uppercase tracking-wide text-slate-500">Error type</p><p className="mt-1 text-red-300">{selectedFailure.errorType}</p></div><div><p className="text-xs font-bold uppercase tracking-wide text-slate-500">Exact provider message</p><pre className="mt-1 max-h-48 overflow-auto whitespace-pre-wrap rounded-xl border border-red-300/15 bg-black/20 p-3 font-mono text-xs leading-5 text-red-200">{selectedFailure.error}</pre></div><div><p className="text-xs font-bold uppercase tracking-wide text-slate-500">Failed at</p><p className="mt-1 text-slate-300">{new Date(selectedFailure.failedAt).toLocaleString()}</p></div></div><div className="mt-6 flex justify-end"><button type="button" onClick={() => setSelectedFailure(null)} className="rounded-lg bg-cyan-400 px-4 py-2 text-xs font-black text-[#061014]">Close</button></div></div></div> : null}
       <div className="mt-7 rounded-3xl border border-white/8 bg-[#101821] p-6">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
           <div>

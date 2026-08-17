@@ -404,23 +404,26 @@ export async function getProductRecommendations(userId: number, productId: strin
 }
 
 export async function getAdminAnalytics(input: { from?: string; to?: string; attributionDays?: number; productId?: string; categoryId?: string; failureType?: string; failureProductId?: string } = {}) {
-  const [{ data: orders, error: ordersError }, { data: wishlistSaves, error: wishlistError }, { data: restockRequests, error: restockError }, { data: orderItems, error: orderItemsError }] = await Promise.all([
+  const [{ data: orders, error: ordersError }, { data: wishlistSaves, error: wishlistError }, { data: restockRequests, error: restockError }, { data: orderItems, error: orderItemsError }, { data: retryAudits, error: retryAuditsError }] = await Promise.all([
     supabase.from("orders").select("created_at, order_status").order("created_at", { ascending: false }).limit(5000),
     supabase.from("wishlist_items").select("created_at, product_id, products(id, name, price, images)").order("created_at", { ascending: false }).limit(5000),
     supabase.from("restock_requests").select("id, requested_at, sent_at, status, product_id, profile_id, email, last_error, updated_at, products(id, name, price, images, category_id, categories(id, name, slug))").order("requested_at", { ascending: false }).limit(5000),
     supabase.from("order_items").select("product_id, orders(user_id, created_at, order_status)").order("id", { ascending: false }).limit(5000),
+    supabase.from("restock_retry_audit").select("id, restock_request_id, action, attempted_at, attempted_count, sent_count, skipped_count, provider_error, profiles(full_name)").order("attempted_at", { ascending: false }).limit(5000),
   ]);
-  if (ordersError || wishlistError || restockError || orderItemsError) throw new Error(ordersError?.message ?? wishlistError?.message ?? restockError?.message ?? orderItemsError?.message);
+  if (ordersError || wishlistError || restockError || orderItemsError || retryAuditsError) throw new Error(ordersError?.message ?? wishlistError?.message ?? restockError?.message ?? orderItemsError?.message ?? retryAuditsError?.message);
   const filteredOrders = filterAnalyticsByDateRange(orders ?? [], input.from, input.to);
   const filteredWishlistSaves = filterAnalyticsByDateRange(wishlistSaves ?? [], input.from, input.to);
   const filteredRestockRequests = filterAnalyticsByDateRange((restockRequests ?? []).map((row: any) => ({ ...row, created_at: row.requested_at })), input.from, input.to).filter((row: any) => { const product = Array.isArray(row.products) ? row.products[0] : row.products; return (!input.productId || row.product_id === input.productId) && (!input.categoryId || product?.category_id === input.categoryId); });
   const attributionDays = input.attributionDays ?? 7;
   const restock = { ...buildRestockAnalytics(filteredRestockRequests, orderItems ?? [], input.to ? new Date(`${input.to}T23:59:59.999Z`) : new Date(), attributionDays), attributionComparison: buildRestockAttributionComparison(filteredRestockRequests, orderItems ?? []) };
   const restockFailures = filteredRestockRequests.filter((row: any) => row.status === "failed").map((row: any) => { const product = Array.isArray(row.products) ? row.products[0] : row.products; const category = Array.isArray(product?.categories) ? product.categories[0] : product?.categories; const error = row.last_error ?? "Unknown delivery failure"; return { id: row.id, email: row.email, productId: row.product_id, productName: product?.name ?? "Unknown product", categoryName: category?.name ?? null, error, errorType: classifyRestockFailure(error), failedAt: row.updated_at }; }).filter((failure: any) => (!input.failureType || failure.errorType === input.failureType) && (!input.failureProductId || failure.productId === input.failureProductId));
-  return { ...buildAdminAnalytics(filteredOrders, filteredWishlistSaves, input.to ? new Date(`${input.to}T23:59:59.999Z`) : new Date()), restock, restockFailures, restockFilters: { productId: input.productId ?? null, categoryId: input.categoryId ?? null, attributionDays, failureType: input.failureType ?? null, failureProductId: input.failureProductId ?? null } };
+  const failureIds = new Set(restockFailures.map((failure: any) => failure.id));
+  const retryAudit = (retryAudits ?? []).filter((audit: any) => failureIds.has(audit.restock_request_id)).map((audit: any) => ({ id: audit.id, requestId: audit.restock_request_id, action: audit.action, attemptedAt: audit.attempted_at, attemptedCount: audit.attempted_count, sentCount: audit.sent_count, skippedCount: audit.skipped_count, providerError: audit.provider_error, administrator: Array.isArray(audit.profiles) ? audit.profiles[0]?.full_name ?? "Unknown administrator" : audit.profiles?.full_name ?? "Unknown administrator" }));
+  return { ...buildAdminAnalytics(filteredOrders, filteredWishlistSaves, input.to ? new Date(`${input.to}T23:59:59.999Z`) : new Date()), restock, restockFailures, retryAudit, restockFilters: { productId: input.productId ?? null, categoryId: input.categoryId ?? null, attributionDays, failureType: input.failureType ?? null, failureProductId: input.failureProductId ?? null } };
 }
 
-export async function retryRestockFailure(requestId: string) {
+export async function retryRestockFailure(requestId: string, adminUserId: number, adminName?: string | null) {
   const { data: request, error: requestError } = await supabase.from("restock_requests").select("id, product_id, status, products(id, name, stock_quantity)").eq("id", requestId).maybeSingle();
   if (requestError) throw new Error(requestError.message);
   if (!request || request.status !== "failed") throw new Error("Only failed restock alerts can be retried.");
@@ -429,10 +432,13 @@ export async function retryRestockFailure(requestId: string) {
   const { error } = await supabase.from("restock_requests").update({ status: "pending", last_error: null, updated_at: new Date().toISOString() }).eq("id", requestId).eq("status", "failed");
   if (error) throw new Error(error.message);
   const delivery = await sendPendingRestockNotifications(request.product_id, product.name);
+  const admin = await ensureProfile(adminUserId, adminName);
+  const { error: auditError } = await supabase.from("restock_retry_audit").insert({ restock_request_id: requestId, admin_profile_id: admin.id, action: "single_retry", attempted_count: 1, sent_count: delivery.sent, skipped_count: 0, provider_error: delivery.sent ? null : "Delivery provider did not send the alert" });
+  if (auditError) throw new Error(auditError.message);
   return { success: true, sent: delivery.sent };
 }
 
-export async function retryRestockFailures(requestIds: string[]) {
+export async function retryRestockFailures(requestIds: string[], adminUserId: number, adminName?: string | null) {
   const ids = Array.from(new Set(requestIds)).slice(0, 100);
   if (!ids.length) return { success: true, attempted: 0, sent: 0, skipped: 0 };
   const { data: requests, error } = await supabase.from("restock_requests").select("id, product_id, status, products(id, name, stock_quantity)").in("id", ids).eq("status", "failed");
@@ -442,7 +448,10 @@ export async function retryRestockFailures(requestIds: string[]) {
   let sent = 0;
   const productIds = new Map<string, string>();
   for (const request of eligible as any[]) { const { error: updateError } = await supabase.from("restock_requests").update({ status: "pending", last_error: null, updated_at: new Date().toISOString() }).eq("id", request.id).eq("status", "failed"); if (updateError) throw new Error(updateError.message); const product = Array.isArray(request.products) ? request.products[0] : request.products; productIds.set(request.product_id, product.name); }
-  for (const [productId, productName] of Array.from(productIds.entries())) { const delivery = await sendPendingRestockNotifications(productId, productName); sent += delivery.sent; }
+  const admin = await ensureProfile(adminUserId, adminName);
+  const deliveryByProduct = new Map<string, number>();
+  for (const [productId, productName] of Array.from(productIds.entries())) { const delivery = await sendPendingRestockNotifications(productId, productName); sent += delivery.sent; deliveryByProduct.set(productId, delivery.sent); }
+  for (const request of eligible as any[]) { const delivered = deliveryByProduct.get(request.product_id) ?? 0; const { error: auditError } = await supabase.from("restock_retry_audit").insert({ restock_request_id: request.id, admin_profile_id: admin.id, action: "bulk_retry", attempted_count: 1, sent_count: delivered, skipped_count: 0, provider_error: delivered ? null : "Delivery provider did not send the alert" }); if (auditError) throw new Error(auditError.message); }
   return { success: true, attempted: eligible.length, sent, skipped };
 }
 

@@ -75,8 +75,8 @@ export const appRouter = router({
     coupons: adminProcedure.query(() => listCoupons()),
     saveCoupon: adminProcedure.input(z.object({ id: z.string().uuid().optional(), code: z.string().min(3).max(40), discountPercent: z.number().int().min(1).max(30), minSpend: z.number().min(0), maxUses: z.number().int().positive().nullable().optional(), isActive: z.boolean(), expiryDate: z.date().nullable().optional() })).mutation(({ input }) => saveCoupon(input)),
     uploadProductImage: adminProcedure.input(imageUploadSchema).mutation(({ input }) => uploadProductImage({ fileName: input.fileName, ...readImageData(input) })),
-    retryRestockFailure: adminProcedure.input(z.object({ requestId: z.string().uuid() })).mutation(({ input }) => retryRestockFailure(input.requestId)),
-    retryRestockFailures: adminProcedure.input(z.object({ requestIds: z.array(z.string().uuid()).min(1).max(100) })).mutation(({ input }) => retryRestockFailures(input.requestIds)),
+    retryRestockFailure: adminProcedure.input(z.object({ requestId: z.string().uuid() })).mutation(({ input, ctx }) => retryRestockFailure(input.requestId, ctx.user.id, ctx.user.name)),
+    retryRestockFailures: adminProcedure.input(z.object({ requestIds: z.array(z.string().uuid()).min(1).max(100) })).mutation(({ input, ctx }) => retryRestockFailures(input.requestIds, ctx.user.id, ctx.user.name)),
   }),
 });
 

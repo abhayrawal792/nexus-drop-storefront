@@ -22,3 +22,9 @@ export function buildAnalyticsCsv(analytics: any) {
   ];
   return rows.map(row => row.map(escapeCsv).join(",")).join("\n");
 }
+
+export function buildRestockFailureCsv(failures: Array<{ productName: string; categoryName?: string | null; email: string; errorType: string; error: string; failedAt: string }>) {
+  const escapeCsv = (value: unknown) => `"${String(value ?? "").replaceAll('"', '""')}"`;
+  const rows = [["Product", "Category", "Recipient", "Error type", "Provider error", "Failed at"], ...failures.map(failure => [failure.productName, failure.categoryName ?? "", failure.email, failure.errorType, failure.error, failure.failedAt])];
+  return rows.map(row => row.map(escapeCsv).join(",")).join("\n");
+}

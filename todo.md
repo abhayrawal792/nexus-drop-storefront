@@ -266,3 +266,8 @@
 - [x] Add bulk retry for selected failed alerts
 - [x] Add attribution-window comparison charts to admin analytics
 - [x] Add tests, responsive verification, GitHub sync, and checkpoint
+
+- [x] Add retry audit history with administrator attribution for failed alerts
+- [x] Add failed-alert detail modal with exact provider error message
+- [x] Add CSV export for the filtered delivery-failure queue
+- [x] Add tests, responsive verification, GitHub sync, and checkpoint
