@@ -202,3 +202,19 @@
 - [x] Audit every catalog image against its product name, category, and detail copy.
 - [x] Replace mismatched catalog visuals with relevant product images and update the storefront data.
 - [x] Verify the image corrections across desktop and mobile shop and product-detail pages.
+
+- [ ] Change the Nexus Drop GitHub repository from private to public.
+- [ ] Verify the public GitHub repository page and provide its direct link.
+
+- [ ] Audit Cloudflare Pages and Workers compatibility for the current full-stack runtime.
+- [ ] Add a Cloudflare-compatible deployment adapter without removing the current Manus runtime.
+- [ ] Add Cloudflare configuration and environment documentation.
+- [ ] Run Cloudflare-targeted tests/build verification and synchronize the deployment-ready source.
+
+- [ ] Diagnose the OAuth state user-mismatch callback error on the active store domain.
+- [ ] Apply the smallest safe origin, callback, cookie, or session fix.
+- [ ] Add OAuth-focused regression coverage and verify login flow after the fix.
+
+- [ ] Audit the post-checkout destination and customer-visible admin navigation.
+- [ ] Ensure customers are routed to order tracking and are blocked from admin routes and procedures.
+- [ ] Add regression tests and verify customer/admin flows, build, and responsive behavior.
