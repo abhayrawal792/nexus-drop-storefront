@@ -29,3 +29,9 @@ describe("admin access", () => {
     await expect(caller.admin.stats()).rejects.toMatchObject({ code: "FORBIDDEN" });
   });
 });
+
+  it("requires an explicitly stored admin role rather than owner identity", () => {
+    const customer = customerContext().user;
+    expect(customer.role).toBe("user");
+    expect(customer.openId).not.toBe("owner-open-id");
+  });

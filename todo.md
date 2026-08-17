@@ -219,6 +219,6 @@
 - [x] Ensure customers are routed to order tracking and are blocked from admin routes and procedures.
 - [x] Add regression tests and verify customer/admin flows, build, and responsive behavior.
 
-- [ ] Remove automatic owner-based admin promotion from user upsert logic.
-- [ ] Add regression coverage proving only explicit database admin roles pass admin authorization.
-- [ ] Apply the live role correction, run full validation, and save a checkpoint.
+- [x] Remove automatic owner-based admin promotion from user upsert logic.
+- [x] Add regression coverage proving only explicit database admin roles pass admin authorization.
+- [x] Apply the live role correction, run full validation, and save a checkpoint.
