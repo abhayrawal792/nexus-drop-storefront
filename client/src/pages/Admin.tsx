@@ -8,6 +8,7 @@ import { buildActivityCsv } from "@/lib/activityExport";
 import { trpc } from "@/lib/trpc";
 import {
   Activity,
+  BellRing,
   BarChart3,
   CheckCircle2,
   CircleDollarSign,
@@ -780,6 +781,12 @@ function Overview({
             No wishlist saves in this date range.
           </p>
         )}
+      </div>
+      <div className="mt-7 rounded-3xl border border-white/8 bg-[#101821] p-5">
+        <div className="flex items-start justify-between gap-4"><div><h2 className="font-black text-white">Restock performance</h2><p className="mt-1 text-xs text-slate-500">Alert signups and purchases after a customer receives a restock email.</p></div><BellRing className="h-5 w-5 text-cyan-300" /></div>
+        <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">{[["Alert signups", analytics?.restock?.totalAlertSignups ?? 0, "text-cyan-300"], ["Sent alerts", analytics?.restock?.sentAlerts ?? 0, "text-white"], ["Cancelled", analytics?.restock?.cancelledAlerts ?? 0, "text-slate-400"], ["Converted", analytics?.restock?.convertedAlerts ?? 0, "text-emerald-300"], ["Restock conversion", `${analytics?.restock?.conversionRate ?? 0}%`, "text-amber-300"]].map(([label, value, color]) => <div key={String(label)} className="rounded-2xl border border-white/8 bg-[#0A0A0A] p-3"><p className={`text-xl font-black ${color}`}>{value}</p><p className="mt-1 text-[10px] font-black uppercase tracking-[.1em] text-slate-500">{label}</p></div>)}</div>
+        <div className="mt-5 h-56"><ResponsiveContainer width="100%" height="100%"><RechartsBarChart data={analytics?.restock?.monthly ?? []}><CartesianGrid stroke="#ffffff12" vertical={false} /><XAxis dataKey="label" stroke="#64748b" fontSize={11} /><YAxis stroke="#64748b" fontSize={11} allowDecimals={false} /><Tooltip contentStyle={{ background: "#0f1720", border: "1px solid #ffffff1a", borderRadius: 12 }} /><Bar dataKey="alertSignups" fill="#22d3ee" radius={[5, 5, 0, 0]} /><Bar dataKey="convertedAlerts" fill="#34d399" radius={[5, 5, 0, 0]} /></RechartsBarChart></ResponsiveContainer></div>
+        {analytics?.restock?.topRestockProducts?.length ? <div className="mt-5 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">{analytics.restock.topRestockProducts.map((product: any) => <div key={product.id} className="rounded-xl border border-white/8 bg-[#0A0A0A] p-3"><p className="truncate text-sm font-bold text-white">{product.name}</p><p className="mt-1 text-xs text-slate-500">{product.signups} signups · {product.converted} converted</p></div>)}</div> : <p className="mt-5 text-sm text-slate-500">No restock alerts in this date range.</p>}
       </div>
       <div className="mt-7 rounded-3xl border border-white/8 bg-[#101821] p-6">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">

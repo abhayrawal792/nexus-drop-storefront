@@ -251,3 +251,8 @@
 - [x] Add loading spinner and success toast feedback for Notify Me submissions
 - [x] Add customer email-preference settings with alert unsubscribe controls
 - [x] Add alert-management and preference tests, responsive verification, GitHub sync, and checkpoint
+
+- [x] Add customer alert history for sent and cancelled back-in-stock requests
+- [x] Add secure one-click alert re-enable flow with confirmation email
+- [x] Add admin-only alert signup and post-restock conversion analytics
+- [x] Add analytics tests, responsive verification, GitHub sync, and checkpoint

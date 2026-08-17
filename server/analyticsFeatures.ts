@@ -1,5 +1,7 @@
 export type AnalyticsOrder = { created_at: string; order_status: string };
 export type AnalyticsWishlistSave = { created_at: string; product_id?: string; products?: { id: string; name: string; price: number | string; images?: string[] } | Array<{ id: string; name: string; price: number | string; images?: string[] }> | null };
+export type AnalyticsRestockRequest = { created_at: string; requested_at?: string; sent_at?: string | null; status: string; product_id: string; profile_id?: string | null; products?: { id: string; name: string; price: number | string; images?: string[] } | Array<{ id: string; name: string; price: number | string; images?: string[] }> | null };
+export type AnalyticsOrderItem = { product_id: string; orders?: { user_id?: string | null; created_at: string; order_status: string } | Array<{ user_id?: string | null; created_at: string; order_status: string }> | null };
 
 export function filterAnalyticsByDateRange<T extends { created_at: string }>(rows: T[], from?: string, to?: string) {
   const fromMs = from ? new Date(`${from}T00:00:00.000Z`).getTime() : Number.NEGATIVE_INFINITY;
@@ -22,36 +24,49 @@ function lastSixMonths(now = new Date()) {
   return result;
 }
 
+function relatedOrder(item: AnalyticsOrderItem) {
+  return Array.isArray(item.orders) ? item.orders[0] : item.orders;
+}
+
+function productFor(request: AnalyticsRestockRequest) {
+  return Array.isArray(request.products) ? request.products[0] : request.products;
+}
+
+function requestConverted(request: AnalyticsRestockRequest, orderItems: AnalyticsOrderItem[]) {
+  if (request.status !== "sent" || !request.sent_at || !request.profile_id) return false;
+  const sentAt = new Date(request.sent_at).getTime();
+  return orderItems.some(item => {
+    if (item.product_id !== request.product_id) return false;
+    const order = relatedOrder(item);
+    return Boolean(order && order.user_id === request.profile_id && order.order_status !== "cancelled" && new Date(order.created_at).getTime() >= sentAt);
+  });
+}
+
+export function buildRestockAnalytics(requests: AnalyticsRestockRequest[], orderItems: AnalyticsOrderItem[], now = new Date()) {
+  const months = lastSixMonths(now);
+  const monthly = months.map(month => {
+    const rows = requests.filter(request => monthKey(request.created_at) === month);
+    const sent = rows.filter(request => request.status === "sent");
+    const converted = sent.filter(request => requestConverted(request, orderItems)).length;
+    return { month, label: new Date(`${month}-01T00:00:00Z`).toLocaleDateString("en-US", { month: "short", timeZone: "UTC" }), alertSignups: rows.length, sentAlerts: sent.length, cancelledAlerts: rows.filter(request => request.status === "cancelled").length, convertedAlerts: converted, conversionRate: sent.length ? Number(((converted / sent.length) * 100).toFixed(1)) : 0 };
+  });
+  const sentAlerts = requests.filter(request => request.status === "sent");
+  const convertedAlerts = sentAlerts.filter(request => requestConverted(request, orderItems)).length;
+  const productMap = new Map<string, { id: string; name: string; signups: number; sent: number; converted: number }>();
+  requests.forEach(request => { const product = productFor(request); const current = productMap.get(request.product_id) ?? { id: request.product_id, name: product?.name ?? "Unknown product", signups: 0, sent: 0, converted: 0 }; current.signups += 1; if (request.status === "sent") current.sent += 1; if (requestConverted(request, orderItems)) current.converted += 1; productMap.set(request.product_id, current); });
+  return { monthly, totalAlertSignups: requests.length, sentAlerts: sentAlerts.length, cancelledAlerts: requests.filter(request => request.status === "cancelled").length, convertedAlerts, conversionRate: sentAlerts.length ? Number(((convertedAlerts / sentAlerts.length) * 100).toFixed(1)) : 0, topRestockProducts: Array.from(productMap.values()).sort((a, b) => b.signups - a.signups || b.converted - a.converted || a.name.localeCompare(b.name)).slice(0, 8) };
+}
+
 export function buildAdminAnalytics(orders: AnalyticsOrder[], wishlistSaves: AnalyticsWishlistSave[], now = new Date()) {
   const months = lastSixMonths(now);
   const monthly = months.map(month => {
     const monthOrders = orders.filter(order => monthKey(order.created_at) === month);
     const completed = monthOrders.filter(order => ["confirmed", "shipped", "delivered"].includes(order.order_status)).length;
-    return {
-      month,
-      label: new Date(`${month}-01T00:00:00Z`).toLocaleDateString("en-US", { month: "short", timeZone: "UTC" }),
-      orders: monthOrders.length,
-      completedOrders: completed,
-      conversionRate: monthOrders.length ? Number(((completed / monthOrders.length) * 100).toFixed(1)) : 0,
-      wishlistSaves: wishlistSaves.filter(save => monthKey(save.created_at) === month).length,
-    };
+    return { month, label: new Date(`${month}-01T00:00:00Z`).toLocaleDateString("en-US", { month: "short", timeZone: "UTC" }), orders: monthOrders.length, completedOrders: completed, conversionRate: monthOrders.length ? Number(((completed / monthOrders.length) * 100).toFixed(1)) : 0, wishlistSaves: wishlistSaves.filter(save => monthKey(save.created_at) === month).length };
   });
   const totalOrders = orders.length;
   const completedOrders = orders.filter(order => ["confirmed", "shipped", "delivered"].includes(order.order_status)).length;
   const savedProducts = new Map<string, { id: string; name: string; price: number; imageUrl: string; saves: number }>();
-  wishlistSaves.forEach(save => {
-    const product = Array.isArray(save.products) ? save.products[0] : save.products;
-    if (!product) return;
-    const current = savedProducts.get(product.id) ?? { id: product.id, name: product.name, price: Number(product.price), imageUrl: product.images?.[0] ?? "", saves: 0 };
-    current.saves += 1;
-    savedProducts.set(product.id, current);
-  });
-  return {
-    monthly,
-    topSavedProducts: Array.from(savedProducts.values()).sort((a, b) => b.saves - a.saves || a.name.localeCompare(b.name)).slice(0, 5),
-    totalOrders,
-    completedOrders,
-    conversionRate: totalOrders ? Number(((completedOrders / totalOrders) * 100).toFixed(1)) : 0,
-    totalWishlistSaves: wishlistSaves.length,
-  };
+  wishlistSaves.forEach(save => { const product = Array.isArray(save.products) ? save.products[0] : save.products; if (!product) return; const current = savedProducts.get(product.id) ?? { id: product.id, name: product.name, price: Number(product.price), imageUrl: product.images?.[0] ?? "", saves: 0 }; current.saves += 1; savedProducts.set(product.id, current); });
+  return { monthly, topSavedProducts: Array.from(savedProducts.values()).sort((a, b) => b.saves - a.saves || a.name.localeCompare(b.name)).slice(0, 5), totalOrders, completedOrders, conversionRate: totalOrders ? Number(((completedOrders / totalOrders) * 100).toFixed(1)) : 0, totalWishlistSaves: wishlistSaves.length };
 }

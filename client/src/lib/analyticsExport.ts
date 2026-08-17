@@ -1,5 +1,23 @@
-export function buildAnalyticsCsv(analytics: { conversionRate: number; totalOrders: number; completedOrders: number; totalWishlistSaves: number; monthly: Array<{ month: string; orders: number; completedOrders: number; conversionRate: number; wishlistSaves: number }> }) {
+export function buildAnalyticsCsv(analytics: any) {
   const escapeCsv = (value: unknown) => `"${String(value ?? "").replaceAll('"', '""')}"`;
-  const rows: unknown[][] = [["Metric", "Value"], ["Conversion rate", `${analytics.conversionRate}%`], ["Total orders", analytics.totalOrders], ["Completed orders", analytics.completedOrders], ["Total wishlist saves", analytics.totalWishlistSaves], [], ["Month", "Orders", "Completed orders", "Conversion rate", "Wishlist saves"], ...analytics.monthly.map(row => [row.month, row.orders, row.completedOrders, `${row.conversionRate}%`, row.wishlistSaves])];
+  const restock = analytics.restock ?? {};
+  const rows: unknown[][] = [
+    ["Metric", "Value"],
+    ["Conversion rate", `${analytics.conversionRate}%`],
+    ["Total orders", analytics.totalOrders],
+    ["Completed orders", analytics.completedOrders],
+    ["Total wishlist saves", analytics.totalWishlistSaves],
+    ["Alert signups", restock.totalAlertSignups ?? 0],
+    ["Sent alerts", restock.sentAlerts ?? 0],
+    ["Cancelled alerts", restock.cancelledAlerts ?? 0],
+    ["Converted alerts", restock.convertedAlerts ?? 0],
+    ["Restock conversion rate", `${restock.conversionRate ?? 0}%`],
+    [],
+    ["Month", "Orders", "Completed orders", "Conversion rate", "Wishlist saves", "Alert signups", "Sent alerts", "Cancelled alerts", "Converted alerts", "Restock conversion rate"],
+    ...analytics.monthly.map((row: any, index: number) => {
+      const restockRow = restock.monthly?.[index] ?? {};
+      return [row.month, row.orders, row.completedOrders, `${row.conversionRate}%`, row.wishlistSaves, restockRow.alertSignups ?? 0, restockRow.sentAlerts ?? 0, restockRow.cancelledAlerts ?? 0, restockRow.convertedAlerts ?? 0, `${restockRow.conversionRate ?? 0}%`];
+    }),
+  ];
   return rows.map(row => row.map(escapeCsv).join(",")).join("\n");
 }

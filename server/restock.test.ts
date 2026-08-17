@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildRestockEmail, normalizeRestockEmail } from "./commerce";
+import { buildAlertReenabledEmail, buildRestockEmail, normalizeRestockEmail } from "./commerce";
 
 describe("restock notification validation", () => {
   it("normalizes valid emails", () => {
@@ -16,5 +16,12 @@ describe("restock notification validation", () => {
     expect(message.subject).toContain("Black Roll-Top Backpack");
     expect(message.text).toContain("back in stock");
     expect(message.html).toContain("Black Roll-Top Backpack");
+  });
+
+  it("builds an alert re-enable confirmation email", () => {
+    const message = buildAlertReenabledEmail();
+    expect(message.subject).toContain("enabled again");
+    expect(message.text.toLowerCase()).toContain("back-in-stock alerts");
+    expect(message.html).toContain("Alerts enabled again");
   });
 });

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { buildAnalyticsCsv } from "../client/src/lib/analyticsExport";
-import { buildAdminAnalytics, filterAnalyticsByDateRange } from "./analyticsFeatures";
+import { buildAdminAnalytics, buildRestockAnalytics, filterAnalyticsByDateRange } from "./analyticsFeatures";
 
 describe("admin analytics aggregation", () => {
   it("calculates six-month order conversion and wishlist saves from real timestamps", () => {
@@ -20,15 +20,33 @@ describe("admin analytics aggregation", () => {
     expect(result.monthly.at(-1)).toMatchObject({ month: "2026-08", orders: 2, completedOrders: 1, wishlistSaves: 2, conversionRate: 50 });
   });
 
+  it("calculates restock signup and post-email conversion metrics from owned orders", () => {
+    const result = buildRestockAnalytics(
+      [
+        { created_at: "2026-08-04T00:00:00Z", status: "sent", product_id: "p1", profile_id: "profile-1", sent_at: "2026-08-05T00:00:00Z", products: { id: "p1", name: "Cuban Chain", price: 999 } },
+        { created_at: "2026-08-06T00:00:00Z", status: "cancelled", product_id: "p1", profile_id: "profile-2", products: { id: "p1", name: "Cuban Chain", price: 999 } },
+      ],
+      [{ product_id: "p1", orders: { user_id: "profile-1", created_at: "2026-08-07T00:00:00Z", order_status: "confirmed" } }],
+      new Date("2026-08-16T00:00:00Z"),
+    );
+    expect(result.totalAlertSignups).toBe(2);
+    expect(result.sentAlerts).toBe(1);
+    expect(result.cancelledAlerts).toBe(1);
+    expect(result.convertedAlerts).toBe(1);
+    expect(result.conversionRate).toBe(100);
+    expect(result.topRestockProducts[0]).toMatchObject({ id: "p1", signups: 2, sent: 1, converted: 1 });
+  });
+
   it("includes both date boundaries in a requested analytics range", () => {
     const rows = [{ created_at: "2026-08-01T00:00:00Z", id: "first" }, { created_at: "2026-08-15T12:00:00Z", id: "middle" }, { created_at: "2026-08-31T23:59:59Z", id: "last" }];
     expect(filterAnalyticsByDateRange(rows, "2026-08-01", "2026-08-31").map(row => row.id)).toEqual(["first", "middle", "last"]);
   });
 
   it("exports summary metrics and monthly rows as escaped CSV", () => {
-    const csv = buildAnalyticsCsv({ conversionRate: 50, totalOrders: 2, completedOrders: 1, totalWishlistSaves: 2, monthly: [{ month: "2026-08", orders: 2, completedOrders: 1, conversionRate: 50, wishlistSaves: 2 }] });
+    const csv = buildAnalyticsCsv({ conversionRate: 50, totalOrders: 2, completedOrders: 1, totalWishlistSaves: 2, restock: { totalAlertSignups: 3, sentAlerts: 2, cancelledAlerts: 1, convertedAlerts: 1, conversionRate: 50, monthly: [{ alertSignups: 3, sentAlerts: 2, cancelledAlerts: 1, convertedAlerts: 1, conversionRate: 50 }] }, monthly: [{ month: "2026-08", orders: 2, completedOrders: 1, conversionRate: 50, wishlistSaves: 2 }] });
     expect(csv).toContain('"Conversion rate","50%"');
-    expect(csv).toContain('"Month","Orders","Completed orders","Conversion rate","Wishlist saves"');
+    expect(csv).toContain('"Alert signups","3"');
+    expect(csv).toContain('"Month","Orders","Completed orders","Conversion rate","Wishlist saves","Alert signups"');
     expect(csv).toContain('"2026-08","2","1","50%","2"');
   });
 });
