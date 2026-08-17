@@ -37,6 +37,13 @@ describe("admin analytics aggregation", () => {
     expect(result.topRestockProducts[0]).toMatchObject({ id: "p1", signups: 2, sent: 1, converted: 1 });
   });
 
+  it("respects the selected attribution window for post-email conversions", () => {
+    const requests = [{ created_at: "2026-08-04T00:00:00Z", status: "sent", product_id: "p1", profile_id: "profile-1", sent_at: "2026-08-05T00:00:00Z", products: { id: "p1", name: "Cuban Chain", price: 999 } }];
+    const orders = [{ product_id: "p1", orders: { user_id: "profile-1", created_at: "2026-08-10T00:00:00Z", order_status: "confirmed" } }];
+    expect(buildRestockAnalytics(requests, orders, new Date("2026-08-16T00:00:00Z"), 7).convertedAlerts).toBe(1);
+    expect(buildRestockAnalytics(requests, orders, new Date("2026-08-16T00:00:00Z"), 3).convertedAlerts).toBe(0);
+  });
+
   it("includes both date boundaries in a requested analytics range", () => {
     const rows = [{ created_at: "2026-08-01T00:00:00Z", id: "first" }, { created_at: "2026-08-15T12:00:00Z", id: "middle" }, { created_at: "2026-08-31T23:59:59Z", id: "last" }];
     expect(filterAnalyticsByDateRange(rows, "2026-08-01", "2026-08-31").map(row => row.id)).toEqual(["first", "middle", "last"]);

@@ -256,3 +256,8 @@
 - [x] Add secure one-click alert re-enable flow with confirmation email
 - [x] Add admin-only alert signup and post-restock conversion analytics
 - [x] Add analytics tests, responsive verification, GitHub sync, and checkpoint
+
+- [x] Add configurable attribution windows to restock conversion analytics
+- [x] Add product and category filters to admin restock analytics
+- [x] Add admin delivery-failure reporting and safe retry/management actions
+- [x] Add filtered analytics tests, responsive verification, GitHub sync, and checkpoint

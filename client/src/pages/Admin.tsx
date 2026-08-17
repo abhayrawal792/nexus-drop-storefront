@@ -138,11 +138,17 @@ function AdminWorkspace() {
   const [activityPage, setActivityPage] = useState(1);
   const [analyticsFrom, setAnalyticsFrom] = useState("");
   const [analyticsTo, setAnalyticsTo] = useState("");
+  const [analyticsAttributionDays, setAnalyticsAttributionDays] = useState("7");
+  const [analyticsProductId, setAnalyticsProductId] = useState("");
+  const [analyticsCategoryId, setAnalyticsCategoryId] = useState("");
   const utils = trpc.useUtils();
   const { data: stats } = trpc.admin.stats.useQuery();
   const { data: analytics } = trpc.admin.analytics.useQuery({
     from: analyticsFrom || undefined,
     to: analyticsTo || undefined,
+    attributionDays: Number(analyticsAttributionDays),
+    productId: analyticsProductId || undefined,
+    categoryId: analyticsCategoryId || undefined,
   });
   const { data: products } = trpc.admin.products.useQuery();
   const { data: orders } = trpc.admin.orders.useQuery();
@@ -375,6 +381,14 @@ function AdminWorkspace() {
             analytics={analytics}
             analyticsFrom={analyticsFrom}
             analyticsTo={analyticsTo}
+            analyticsAttributionDays={analyticsAttributionDays}
+            analyticsProductId={analyticsProductId}
+            analyticsCategoryId={analyticsCategoryId}
+            products={products ?? []}
+            categories={categories ?? []}
+            setAnalyticsAttributionDays={setAnalyticsAttributionDays}
+            setAnalyticsProductId={setAnalyticsProductId}
+            setAnalyticsCategoryId={setAnalyticsCategoryId}
             setAnalyticsFrom={setAnalyticsFrom}
             setAnalyticsTo={setAnalyticsTo}
             onQuickRange={setAnalyticsRange}
@@ -514,6 +528,14 @@ function Overview({
   analytics,
   analyticsFrom,
   analyticsTo,
+  analyticsAttributionDays,
+  analyticsProductId,
+  analyticsCategoryId,
+  products,
+  categories,
+  setAnalyticsAttributionDays,
+  setAnalyticsProductId,
+  setAnalyticsCategoryId,
   setAnalyticsFrom,
   setAnalyticsTo,
   onQuickRange,
@@ -539,6 +561,14 @@ function Overview({
   analytics: any;
   analyticsFrom: string;
   analyticsTo: string;
+  analyticsAttributionDays: string;
+  analyticsProductId: string;
+  analyticsCategoryId: string;
+  products: any[];
+  categories: any[];
+  setAnalyticsAttributionDays: (value: string) => void;
+  setAnalyticsProductId: (value: string) => void;
+  setAnalyticsCategoryId: (value: string) => void;
   setAnalyticsFrom: (value: string) => void;
   setAnalyticsTo: (value: string) => void;
   onQuickRange: (range: "last7" | "this-month") => void;
@@ -590,6 +620,7 @@ function Overview({
       icon: <Package />,
     },
   ];
+  const retryFailure = trpc.admin.retryRestockFailure.useMutation({ onSuccess: result => { toast.success(result.sent ? "Alert email retried successfully" : "Alert queued for retry"); }, onError: error => toast.error(error.message) });
   return (
     <section className="mt-7">
       <div className="mb-5 flex flex-col gap-3 rounded-2xl border border-white/8 bg-[#101821] p-4 sm:flex-row sm:items-end sm:justify-between">
@@ -616,6 +647,11 @@ function Overview({
           >
             This Month
           </button>
+          <label className="text-xs text-slate-500">Attribution
+            <select value={analyticsAttributionDays} onChange={event => setAnalyticsAttributionDays(event.target.value)} className="ml-2 rounded-lg border border-white/10 bg-[#0A0A0A] px-2 py-1.5 text-xs text-slate-300"><option value="1">1 day</option><option value="7">7 days</option><option value="14">14 days</option><option value="30">30 days</option></select>
+          </label>
+          <select value={analyticsCategoryId} onChange={event => setAnalyticsCategoryId(event.target.value)} className="rounded-lg border border-white/10 bg-[#0A0A0A] px-2 py-1.5 text-xs text-slate-300" aria-label="Filter restock analytics by category"><option value="">All categories</option>{categories.map(category => <option key={category.id} value={category.id}>{category.name}</option>)}</select>
+          <select value={analyticsProductId} onChange={event => setAnalyticsProductId(event.target.value)} className="rounded-lg border border-white/10 bg-[#0A0A0A] px-2 py-1.5 text-xs text-slate-300" aria-label="Filter restock analytics by product"><option value="">All products</option>{products.filter(product => !analyticsCategoryId || product.category_id === analyticsCategoryId).map(product => <option key={product.id} value={product.id}>{product.name}</option>)}</select>
           <label className="text-xs text-slate-500">
             From
             <input
@@ -787,6 +823,10 @@ function Overview({
         <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">{[["Alert signups", analytics?.restock?.totalAlertSignups ?? 0, "text-cyan-300"], ["Sent alerts", analytics?.restock?.sentAlerts ?? 0, "text-white"], ["Cancelled", analytics?.restock?.cancelledAlerts ?? 0, "text-slate-400"], ["Converted", analytics?.restock?.convertedAlerts ?? 0, "text-emerald-300"], ["Restock conversion", `${analytics?.restock?.conversionRate ?? 0}%`, "text-amber-300"]].map(([label, value, color]) => <div key={String(label)} className="rounded-2xl border border-white/8 bg-[#0A0A0A] p-3"><p className={`text-xl font-black ${color}`}>{value}</p><p className="mt-1 text-[10px] font-black uppercase tracking-[.1em] text-slate-500">{label}</p></div>)}</div>
         <div className="mt-5 h-56"><ResponsiveContainer width="100%" height="100%"><RechartsBarChart data={analytics?.restock?.monthly ?? []}><CartesianGrid stroke="#ffffff12" vertical={false} /><XAxis dataKey="label" stroke="#64748b" fontSize={11} /><YAxis stroke="#64748b" fontSize={11} allowDecimals={false} /><Tooltip contentStyle={{ background: "#0f1720", border: "1px solid #ffffff1a", borderRadius: 12 }} /><Bar dataKey="alertSignups" fill="#22d3ee" radius={[5, 5, 0, 0]} /><Bar dataKey="convertedAlerts" fill="#34d399" radius={[5, 5, 0, 0]} /></RechartsBarChart></ResponsiveContainer></div>
         {analytics?.restock?.topRestockProducts?.length ? <div className="mt-5 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">{analytics.restock.topRestockProducts.map((product: any) => <div key={product.id} className="rounded-xl border border-white/8 bg-[#0A0A0A] p-3"><p className="truncate text-sm font-bold text-white">{product.name}</p><p className="mt-1 text-xs text-slate-500">{product.signups} signups · {product.converted} converted</p></div>)}</div> : <p className="mt-5 text-sm text-slate-500">No restock alerts in this date range.</p>}
+      </div>
+      <div className="mt-7 rounded-3xl border border-red-300/15 bg-[#101821] p-5">
+        <div className="flex items-start justify-between gap-4"><div><h2 className="font-black text-white">Email delivery failures</h2><p className="mt-1 text-xs text-slate-500">Bounced or undelivered back-in-stock alerts in the selected window.</p></div><ShieldAlert className="h-5 w-5 text-red-300" /></div>
+        {analytics?.restockFailures?.length ? <div className="mt-4 divide-y divide-white/8">{analytics.restockFailures.map((failure: any) => <div key={failure.id} className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center"><div className="min-w-0 flex-1"><p className="truncate text-sm font-bold text-white">{failure.productName}</p><p className="mt-1 text-xs text-slate-500">{failure.email}{failure.categoryName ? ` · ${failure.categoryName}` : ""}</p><p className="mt-1 text-xs text-red-300">{failure.error}</p></div><button type="button" disabled={retryFailure.isPending} onClick={() => retryFailure.mutate({ requestId: failure.id })} className="rounded-lg border border-cyan-300/30 px-3 py-2 text-xs font-black text-cyan-300 hover:bg-cyan-300/10 disabled:opacity-50">Retry delivery</button></div>)}</div> : <p className="mt-4 text-sm text-emerald-300">No failed alert deliveries in this date range.</p>}
       </div>
       <div className="mt-7 rounded-3xl border border-white/8 bg-[#101821] p-6">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">

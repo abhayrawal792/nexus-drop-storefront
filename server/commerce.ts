@@ -403,18 +403,31 @@ export async function getProductRecommendations(userId: number, productId: strin
   return ranked.map((row: any) => toProduct({ ...row, categories: Array.isArray(row.categories) ? row.categories[0] : row.categories } as CatalogRow));
 }
 
-export async function getAdminAnalytics(input: { from?: string; to?: string } = {}) {
+export async function getAdminAnalytics(input: { from?: string; to?: string; attributionDays?: number; productId?: string; categoryId?: string } = {}) {
   const [{ data: orders, error: ordersError }, { data: wishlistSaves, error: wishlistError }, { data: restockRequests, error: restockError }, { data: orderItems, error: orderItemsError }] = await Promise.all([
     supabase.from("orders").select("created_at, order_status").order("created_at", { ascending: false }).limit(5000),
     supabase.from("wishlist_items").select("created_at, product_id, products(id, name, price, images)").order("created_at", { ascending: false }).limit(5000),
-    supabase.from("restock_requests").select("requested_at, sent_at, status, product_id, profile_id, products(id, name, price, images)").order("requested_at", { ascending: false }).limit(5000),
+    supabase.from("restock_requests").select("id, requested_at, sent_at, status, product_id, profile_id, email, last_error, updated_at, products(id, name, price, images, category_id, categories(id, name, slug))").order("requested_at", { ascending: false }).limit(5000),
     supabase.from("order_items").select("product_id, orders(user_id, created_at, order_status)").order("id", { ascending: false }).limit(5000),
   ]);
   if (ordersError || wishlistError || restockError || orderItemsError) throw new Error(ordersError?.message ?? wishlistError?.message ?? restockError?.message ?? orderItemsError?.message);
   const filteredOrders = filterAnalyticsByDateRange(orders ?? [], input.from, input.to);
   const filteredWishlistSaves = filterAnalyticsByDateRange(wishlistSaves ?? [], input.from, input.to);
-  const filteredRestockRequests = filterAnalyticsByDateRange((restockRequests ?? []).map((row: any) => ({ ...row, created_at: row.requested_at })), input.from, input.to);
-  return { ...buildAdminAnalytics(filteredOrders, filteredWishlistSaves, input.to ? new Date(`${input.to}T23:59:59.999Z`) : new Date()), restock: buildRestockAnalytics(filteredRestockRequests, orderItems ?? [], input.to ? new Date(`${input.to}T23:59:59.999Z`) : new Date()) };
+  const filteredRestockRequests = filterAnalyticsByDateRange((restockRequests ?? []).map((row: any) => ({ ...row, created_at: row.requested_at })), input.from, input.to).filter((row: any) => { const product = Array.isArray(row.products) ? row.products[0] : row.products; return (!input.productId || row.product_id === input.productId) && (!input.categoryId || product?.category_id === input.categoryId); });
+  const restock = buildRestockAnalytics(filteredRestockRequests, orderItems ?? [], input.to ? new Date(`${input.to}T23:59:59.999Z`) : new Date(), input.attributionDays ?? 7);
+  return { ...buildAdminAnalytics(filteredOrders, filteredWishlistSaves, input.to ? new Date(`${input.to}T23:59:59.999Z`) : new Date()), restock, restockFailures: filteredRestockRequests.filter((row: any) => row.status === "failed").map((row: any) => ({ id: row.id, email: row.email, productId: row.product_id, productName: (Array.isArray(row.products) ? row.products[0] : row.products)?.name ?? "Unknown product", categoryName: ((Array.isArray(row.products) ? row.products[0] : row.products)?.categories?.[0] ?? (Array.isArray(row.products) ? row.products[0] : row.products)?.categories)?.name ?? null, error: row.last_error ?? "Unknown delivery failure", failedAt: row.updated_at })), restockFilters: { productId: input.productId ?? null, categoryId: input.categoryId ?? null, attributionDays: input.attributionDays ?? 7 } };
+}
+
+export async function retryRestockFailure(requestId: string) {
+  const { data: request, error: requestError } = await supabase.from("restock_requests").select("id, product_id, status, products(id, name, stock_quantity)").eq("id", requestId).maybeSingle();
+  if (requestError) throw new Error(requestError.message);
+  if (!request || request.status !== "failed") throw new Error("Only failed restock alerts can be retried.");
+  const product = Array.isArray(request.products) ? request.products[0] : request.products;
+  if (!product || product.stock_quantity <= 0) throw new Error("Restock the product before retrying delivery.");
+  const { error } = await supabase.from("restock_requests").update({ status: "pending", last_error: null, updated_at: new Date().toISOString() }).eq("id", requestId).eq("status", "failed");
+  if (error) throw new Error(error.message);
+  const delivery = await sendPendingRestockNotifications(request.product_id, product.name);
+  return { success: true, sent: delivery.sent };
 }
 
 export async function listAdminOrders() {

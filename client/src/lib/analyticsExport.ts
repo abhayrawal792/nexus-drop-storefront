@@ -11,6 +11,7 @@ export function buildAnalyticsCsv(analytics: any) {
     ["Sent alerts", restock.sentAlerts ?? 0],
     ["Cancelled alerts", restock.cancelledAlerts ?? 0],
     ["Converted alerts", restock.convertedAlerts ?? 0],
+    ["Restock attribution window", `${restock.attributionDays ?? 7} days`],
     ["Restock conversion rate", `${restock.conversionRate ?? 0}%`],
     [],
     ["Month", "Orders", "Completed orders", "Conversion rate", "Wishlist saves", "Alert signups", "Sent alerts", "Cancelled alerts", "Converted alerts", "Restock conversion rate"],
