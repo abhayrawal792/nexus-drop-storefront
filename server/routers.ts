@@ -3,7 +3,7 @@ import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { adminProcedure, protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import { systemRouter } from "./_core/systemRouter";
-import { addWishlist, createOrder, createReview, createWishlistShare, getAdminAnalytics, getAdminStats, getPaymentProofUrl, getProduct, getProductRecommendations, getSharedWishlist, getUserOrders, listAdminOrders, listAdminProducts, listAdminReviews, listCategories, listCoupons, listProducts, listReviews, listWishlist, listWishlistAlerts, listWishlistShares, listProductActivity, markWishlistAlertRead, moderateReview, removeWishlist, revokeWishlistShare, saveCoupon, saveProduct, updateWishlistShare, updateOrder, uploadPaymentProof, uploadProductImage, validateCoupon } from "./commerce";
+import { addWishlist, createCustomerAddress, createOrder, createReview, createWishlistShare, deleteCustomerAddress, getAdminAnalytics, getAdminStats, getPaymentProofUrl, getProduct, getProductRecommendations, getSharedWishlist, getUserOrders, listAdminOrders, listAdminProducts, listAdminReviews, listCategories, listCoupons, listCustomerAddresses, listProducts, listReviews, listWishlist, listWishlistAlerts, listWishlistShares, listProductActivity, markWishlistAlertRead, moderateReview, removeWishlist, requestRestock, revokeWishlistShare, saveCoupon, saveProduct, setDefaultCustomerAddress, updateCustomerAddress, updateWishlistShare, updateOrder, uploadPaymentProof, uploadProductImage, validateCoupon } from "./commerce";
 
 const itemSchema = z.object({ productId: z.string().uuid(), quantity: z.number().int().min(1).max(10) });
 const orderSchema = z.object({
@@ -11,6 +11,7 @@ const orderSchema = z.object({
   paymentMethod: z.enum(["COD", "eSewa", "Khalti", "FonePay", "BankTransfer"]), paymentProofUrl: z.string().max(500).optional(), couponCode: z.string().max(40).optional(), items: z.array(itemSchema).min(1).max(20),
 });
 const imageUploadSchema = z.object({ fileName: z.string().max(100), dataUrl: z.string().max(3_000_000) });
+const customerAddressSchema = z.object({ label: z.string().trim().min(1).max(80), fullName: z.string().trim().min(2).max(160), phone: z.string().trim().min(8).max(24), addressLine: z.string().trim().min(8).max(600), city: z.string().trim().min(2).max(100), isDefault: z.boolean().optional() });
 
 function readImageData(input: z.infer<typeof imageUploadSchema>) {
   const match = input.dataUrl.match(/^data:([^;]+);base64,(.+)$/);
@@ -45,9 +46,15 @@ export const appRouter = router({
     sharedWishlist: publicProcedure.input(z.object({ token: z.string().min(12).max(100) })).query(({ input }) => getSharedWishlist(input.token)),
     coupon: publicProcedure.input(z.object({ code: z.string().max(40), subtotal: z.number().min(0) })).query(({ input }) => validateCoupon(input.code, input.subtotal)),
     uploadReceipt: publicProcedure.input(imageUploadSchema).mutation(async ({ input, ctx }) => uploadPaymentProof({ fileName: input.fileName, ...readImageData(input), userId: ctx.user?.id })),
+    requestRestock: publicProcedure.input(z.object({ productId: z.string().uuid(), email: z.string().max(254) })).mutation(({ input, ctx }) => { const forwarded = ctx.req.headers["x-forwarded-for"]; const ipAddress = typeof forwarded === "string" ? forwarded.split(",")[0].trim() : ctx.req.socket.remoteAddress ?? "unknown"; return requestRestock({ ...input, ipAddress }); }),
     checkout: publicProcedure.input(orderSchema).mutation(({ input, ctx }) => createOrder({ ...input, userId: ctx.user?.id, userName: ctx.user?.name })),
     submitReview: protectedProcedure.input(z.object({ productId: z.string().uuid(), rating: z.number().int().min(1).max(5), comment: z.string().min(4).max(800) })).mutation(({ input, ctx }) => createReview({ ...input, userId: ctx.user.id, userName: ctx.user.name, rating: input.rating, comment: input.comment })),
     accountOrders: protectedProcedure.query(({ ctx }) => getUserOrders(ctx.user.id, ctx.user.name)),
+    customerAddresses: protectedProcedure.query(({ ctx }) => listCustomerAddresses(ctx.user.id, ctx.user.name)),
+    createCustomerAddress: protectedProcedure.input(customerAddressSchema).mutation(({ input, ctx }) => createCustomerAddress(ctx.user.id, input, ctx.user.name)),
+    updateCustomerAddress: protectedProcedure.input(z.object({ addressId: z.string().uuid(), data: customerAddressSchema })).mutation(({ input, ctx }) => updateCustomerAddress(ctx.user.id, input.addressId, input.data, ctx.user.name)),
+    deleteCustomerAddress: protectedProcedure.input(z.object({ addressId: z.string().uuid() })).mutation(({ input, ctx }) => deleteCustomerAddress(ctx.user.id, input.addressId, ctx.user.name)),
+    setDefaultCustomerAddress: protectedProcedure.input(z.object({ addressId: z.string().uuid() })).mutation(({ input, ctx }) => setDefaultCustomerAddress(ctx.user.id, input.addressId, ctx.user.name)),
   }),
   admin: router({
     stats: adminProcedure.query(() => getAdminStats()),

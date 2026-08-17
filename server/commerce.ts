@@ -1,5 +1,5 @@
 import { calculateOrderTotals } from "../shared/commerce";
-import { randomBytes } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
 import { supabase } from "./supabase";
 import { buildWishlistAlerts } from "./wishlistFeatures";
 import { rankWishlistRecommendations } from "./recommendationFeatures";
@@ -9,6 +9,11 @@ import { buildAdminAnalytics, filterAnalyticsByDateRange } from "./analyticsFeat
 import { filterProductActivity, type ProductActivityEntry } from "./activityFeatures";
 
 export type PaymentMethod = "COD" | "eSewa" | "Khalti" | "FonePay" | "BankTransfer";
+
+export function normalizeRestockEmail(value: string) {
+  const email = value.trim().toLowerCase();
+  return /^\S+@\S+\.\S+$/.test(email) ? email : null;
+}
 export type OrderStatus = "pending" | "confirmed" | "shipped" | "delivered" | "cancelled";
 export type PaymentStatus = "pending" | "verified" | "failed";
 
@@ -394,6 +399,23 @@ export async function saveProduct(input: { id?: string; name: string; slug: stri
   return { success: true };
 }
 
+export async function requestRestock(input: { productId: string; email: string; ipAddress: string }) {
+  const email = normalizeRestockEmail(input.email);
+  if (!email) throw new Error("Enter a valid email address.");
+  const { data: product, error: productError } = await supabase.from("products").select("id, name, is_active, stock_quantity").eq("id", input.productId).maybeSingle();
+  if (productError) throw new Error(productError.message);
+  if (!product || !product.is_active) throw new Error("This product is no longer available.");
+  if (product.stock_quantity > 0) throw new Error("This item is available now—add it to your cart instead.");
+  const ipHash = createHash("sha256").update(input.ipAddress || "unknown").digest("hex");
+  const emailHash = createHash("sha256").update(email).digest("hex");
+  const { data: allowed, error: limitError } = await supabase.rpc("consume_restock_request_limit", { p_ip_hash: ipHash, p_email_hash: emailHash, p_now: new Date().toISOString() });
+  if (limitError) throw new Error(limitError.message);
+  if (!allowed) throw new Error("Too many notification requests. Please try again later.");
+  const { error } = await supabase.from("restock_requests").upsert({ product_id: input.productId, email, status: "pending", updated_at: new Date().toISOString() }, { onConflict: "product_id,email" });
+  if (error) throw new Error(error.message);
+  return { success: true, productName: product.name };
+}
+
 export async function getPaymentProofUrl(orderId: string) {
   const { data: order, error } = await supabase.from("orders").select("payment_proof_url").eq("id", orderId).maybeSingle();
   if (error) throw new Error(error.message);
@@ -419,6 +441,67 @@ export async function saveCoupon(input: { id?: string; code: string; discountPer
   const payload = { code: input.code.trim().toUpperCase(), discount_percent: input.discountPercent, min_spend: input.minSpend, max_uses: input.maxUses ?? null, is_active: input.isActive, expiry_date: input.expiryDate?.toISOString() ?? null };
   const query = input.id ? supabase.from("coupons").update(payload).eq("id", input.id) : supabase.from("coupons").insert(payload);
   const { error } = await query;
+  if (error) throw new Error(error.message);
+  return { success: true };
+}
+
+
+export type CustomerAddressInput = {
+  label: string;
+  fullName: string;
+  phone: string;
+  addressLine: string;
+  city: string;
+  isDefault?: boolean;
+};
+
+function addressPayload(input: CustomerAddressInput) {
+  return {
+    label: input.label.trim(),
+    full_name: input.fullName.trim(),
+    phone: input.phone.trim(),
+    address_line: input.addressLine.trim(),
+    city: input.city.trim(),
+    is_default: Boolean(input.isDefault),
+  };
+}
+
+export async function listCustomerAddresses(userId: number, userName?: string | null) {
+  const profile = await ensureProfile(userId, userName);
+  const { data, error } = await supabase.from("customer_addresses").select("id, label, full_name, phone, address_line, city, is_default, created_at, updated_at").eq("user_id", profile.id).order("is_default", { ascending: false }).order("created_at", { ascending: false });
+  if (error) throw new Error(error.message);
+  return (data ?? []).map((address: any) => ({ id: address.id, label: address.label, fullName: address.full_name, phone: address.phone, addressLine: address.address_line, city: address.city, isDefault: Boolean(address.is_default), createdAt: new Date(address.created_at), updatedAt: new Date(address.updated_at) }));
+}
+
+export async function createCustomerAddress(userId: number, input: CustomerAddressInput, userName?: string | null) {
+  const profile = await ensureProfile(userId, userName);
+  const payload = addressPayload(input);
+  if (payload.is_default) await supabase.from("customer_addresses").update({ is_default: false }).eq("user_id", profile.id);
+  const { data, error } = await supabase.from("customer_addresses").insert({ ...payload, user_id: profile.id }).select("id, label, full_name, phone, address_line, city, is_default, created_at, updated_at").single();
+  if (error || !data) throw new Error(error?.message ?? "Unable to save address.");
+  return { id: data.id, label: data.label, fullName: data.full_name, phone: data.phone, addressLine: data.address_line, city: data.city, isDefault: Boolean(data.is_default), createdAt: new Date(data.created_at), updatedAt: new Date(data.updated_at) };
+}
+
+export async function updateCustomerAddress(userId: number, addressId: string, input: CustomerAddressInput, userName?: string | null) {
+  const profile = await ensureProfile(userId, userName);
+  const payload = addressPayload(input);
+  if (payload.is_default) await supabase.from("customer_addresses").update({ is_default: false }).eq("user_id", profile.id).neq("id", addressId);
+  const { data, error } = await supabase.from("customer_addresses").update(payload).eq("id", addressId).eq("user_id", profile.id).select("id, label, full_name, phone, address_line, city, is_default, created_at, updated_at").single();
+  if (error || !data) throw new Error(error?.message ?? "Unable to update address.");
+  return { id: data.id, label: data.label, fullName: data.full_name, phone: data.phone, addressLine: data.address_line, city: data.city, isDefault: Boolean(data.is_default), createdAt: new Date(data.created_at), updatedAt: new Date(data.updated_at) };
+}
+
+export async function deleteCustomerAddress(userId: number, addressId: string, userName?: string | null) {
+  const profile = await ensureProfile(userId, userName);
+  const { error } = await supabase.from("customer_addresses").delete().eq("id", addressId).eq("user_id", profile.id);
+  if (error) throw new Error(error.message);
+  return { success: true };
+}
+
+export async function setDefaultCustomerAddress(userId: number, addressId: string, userName?: string | null) {
+  const profile = await ensureProfile(userId, userName);
+  await supabase.from("customer_addresses").update({ is_default: false }).eq("user_id", profile.id);
+  const { error } = await supabase.from("customer_addresses").update({ is_default: true }).eq("id", addressId).eq("user_id", profile.id);
   if (error) throw new Error(error.message);
   return { success: true };
 }

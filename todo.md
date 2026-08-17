@@ -234,3 +234,15 @@
 - [x] Audit free OTP options against the existing Manus and Supabase authentication setup.
 - [x] Add customer OTP login/create-account flow without changing manual admin role assignment.
 - [x] Add OTP validation and role-separation tests, run full verification, and save a checkpoint.
+
+- [x] Add a customer dashboard with private order history and wishlist management.
+- [x] Improve OTP loading, incorrect-code, and resend feedback states.
+- [x] Persist customer-owned shipping addresses with secure CRUD and checkout selection.
+- [x] Add privacy and validation tests, run TypeScript/build/responsive verification, and save a checkpoint.
+
+- [x] Apply and verify Supabase customer_addresses migration
+- [x] Add protected customer address CRUD procedures
+- [x] Expand customer account into dashboard with wishlist and address book
+- [x] Integrate saved addresses into checkout
+- [x] Verify restock persistence and email notification backend
+- [ ] Run tests, typecheck, build, responsive verification, and sync public GitHub source

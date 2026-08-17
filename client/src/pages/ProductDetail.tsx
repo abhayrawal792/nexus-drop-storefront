@@ -93,9 +93,8 @@ export default function ProductDetail() {
   >({});
   const [notifyProductId, setNotifyProductId] = useState<string | null>(null);
   const [notifyEmail, setNotifyEmail] = useState("");
-  const [restockRequests, setRestockRequests] = useState<
-    Record<string, string>
-  >({});
+  const [restockRequests, setRestockRequests] = useState<Record<string, string>>({});
+  const requestRestock = trpc.store.requestRestock.useMutation({ onSuccess: (result, variables) => { setRestockRequests(current => ({ ...current, [variables.productId]: variables.email })); setNotifyProductId(null); setNotifyEmail(""); toast.success(`We will email you when ${result.productName} is back.`); }, onError: error => toast.error(error.message) });
 
   const images = product?.images?.length
     ? product.images
@@ -156,10 +155,7 @@ export default function ProductDetail() {
     const email = notifyEmail.trim().toLowerCase();
     if (!/^\S+@\S+\.\S+$/.test(email))
       return toast.error("Enter a valid email address.");
-    setRestockRequests(current => ({ ...current, [item.id]: email }));
-    setNotifyProductId(null);
-    setNotifyEmail("");
-    toast.success(`Restock request received for ${item.name}.`);
+    requestRestock.mutate({ productId: item.id, email });
   };
   const submitReview = () => {
     if (!user) return startLogin();
@@ -480,9 +476,10 @@ export default function ProductDetail() {
                           />
                           <button
                             type="submit"
-                            className="h-9 shrink-0 rounded-lg bg-cyan-400 px-2 text-[10px] font-black text-[#061014]"
+                            disabled={requestRestock.isPending}
+                            className="h-9 shrink-0 rounded-lg bg-cyan-400 px-2 text-[10px] font-black text-[#061014] disabled:opacity-60"
                           >
-                            Send
+                            {requestRestock.isPending ? "…" : "Send"}
                           </button>
                         </form>
                       ) : (
