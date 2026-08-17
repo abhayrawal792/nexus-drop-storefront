@@ -5,7 +5,7 @@ import { buildWishlistAlerts } from "./wishlistFeatures";
 import { rankWishlistRecommendations } from "./recommendationFeatures";
 import { normalizeReviewFilters } from "./reviewFeatures";
 import { adminReviewSelect, publicReviewSelect } from "./reviewQueryContracts";
-import { buildAdminAnalytics, buildRestockAnalytics, filterAnalyticsByDateRange } from "./analyticsFeatures";
+import { buildAdminAnalytics, buildRestockAnalytics, buildRestockAttributionComparison, classifyRestockFailure, filterAnalyticsByDateRange } from "./analyticsFeatures";
 import { filterProductActivity, type ProductActivityEntry } from "./activityFeatures";
 
 export type PaymentMethod = "COD" | "eSewa" | "Khalti" | "FonePay" | "BankTransfer";
@@ -403,7 +403,7 @@ export async function getProductRecommendations(userId: number, productId: strin
   return ranked.map((row: any) => toProduct({ ...row, categories: Array.isArray(row.categories) ? row.categories[0] : row.categories } as CatalogRow));
 }
 
-export async function getAdminAnalytics(input: { from?: string; to?: string; attributionDays?: number; productId?: string; categoryId?: string } = {}) {
+export async function getAdminAnalytics(input: { from?: string; to?: string; attributionDays?: number; productId?: string; categoryId?: string; failureType?: string; failureProductId?: string } = {}) {
   const [{ data: orders, error: ordersError }, { data: wishlistSaves, error: wishlistError }, { data: restockRequests, error: restockError }, { data: orderItems, error: orderItemsError }] = await Promise.all([
     supabase.from("orders").select("created_at, order_status").order("created_at", { ascending: false }).limit(5000),
     supabase.from("wishlist_items").select("created_at, product_id, products(id, name, price, images)").order("created_at", { ascending: false }).limit(5000),
@@ -414,8 +414,10 @@ export async function getAdminAnalytics(input: { from?: string; to?: string; att
   const filteredOrders = filterAnalyticsByDateRange(orders ?? [], input.from, input.to);
   const filteredWishlistSaves = filterAnalyticsByDateRange(wishlistSaves ?? [], input.from, input.to);
   const filteredRestockRequests = filterAnalyticsByDateRange((restockRequests ?? []).map((row: any) => ({ ...row, created_at: row.requested_at })), input.from, input.to).filter((row: any) => { const product = Array.isArray(row.products) ? row.products[0] : row.products; return (!input.productId || row.product_id === input.productId) && (!input.categoryId || product?.category_id === input.categoryId); });
-  const restock = buildRestockAnalytics(filteredRestockRequests, orderItems ?? [], input.to ? new Date(`${input.to}T23:59:59.999Z`) : new Date(), input.attributionDays ?? 7);
-  return { ...buildAdminAnalytics(filteredOrders, filteredWishlistSaves, input.to ? new Date(`${input.to}T23:59:59.999Z`) : new Date()), restock, restockFailures: filteredRestockRequests.filter((row: any) => row.status === "failed").map((row: any) => ({ id: row.id, email: row.email, productId: row.product_id, productName: (Array.isArray(row.products) ? row.products[0] : row.products)?.name ?? "Unknown product", categoryName: ((Array.isArray(row.products) ? row.products[0] : row.products)?.categories?.[0] ?? (Array.isArray(row.products) ? row.products[0] : row.products)?.categories)?.name ?? null, error: row.last_error ?? "Unknown delivery failure", failedAt: row.updated_at })), restockFilters: { productId: input.productId ?? null, categoryId: input.categoryId ?? null, attributionDays: input.attributionDays ?? 7 } };
+  const attributionDays = input.attributionDays ?? 7;
+  const restock = { ...buildRestockAnalytics(filteredRestockRequests, orderItems ?? [], input.to ? new Date(`${input.to}T23:59:59.999Z`) : new Date(), attributionDays), attributionComparison: buildRestockAttributionComparison(filteredRestockRequests, orderItems ?? []) };
+  const restockFailures = filteredRestockRequests.filter((row: any) => row.status === "failed").map((row: any) => { const product = Array.isArray(row.products) ? row.products[0] : row.products; const category = Array.isArray(product?.categories) ? product.categories[0] : product?.categories; const error = row.last_error ?? "Unknown delivery failure"; return { id: row.id, email: row.email, productId: row.product_id, productName: product?.name ?? "Unknown product", categoryName: category?.name ?? null, error, errorType: classifyRestockFailure(error), failedAt: row.updated_at }; }).filter((failure: any) => (!input.failureType || failure.errorType === input.failureType) && (!input.failureProductId || failure.productId === input.failureProductId));
+  return { ...buildAdminAnalytics(filteredOrders, filteredWishlistSaves, input.to ? new Date(`${input.to}T23:59:59.999Z`) : new Date()), restock, restockFailures, restockFilters: { productId: input.productId ?? null, categoryId: input.categoryId ?? null, attributionDays, failureType: input.failureType ?? null, failureProductId: input.failureProductId ?? null } };
 }
 
 export async function retryRestockFailure(requestId: string) {
@@ -428,6 +430,20 @@ export async function retryRestockFailure(requestId: string) {
   if (error) throw new Error(error.message);
   const delivery = await sendPendingRestockNotifications(request.product_id, product.name);
   return { success: true, sent: delivery.sent };
+}
+
+export async function retryRestockFailures(requestIds: string[]) {
+  const ids = Array.from(new Set(requestIds)).slice(0, 100);
+  if (!ids.length) return { success: true, attempted: 0, sent: 0, skipped: 0 };
+  const { data: requests, error } = await supabase.from("restock_requests").select("id, product_id, status, products(id, name, stock_quantity)").in("id", ids).eq("status", "failed");
+  if (error) throw new Error(error.message);
+  const eligible = (requests ?? []).filter((request: any) => { const product = Array.isArray(request.products) ? request.products[0] : request.products; return product?.stock_quantity > 0; });
+  const skipped = ids.length - eligible.length;
+  let sent = 0;
+  const productIds = new Map<string, string>();
+  for (const request of eligible as any[]) { const { error: updateError } = await supabase.from("restock_requests").update({ status: "pending", last_error: null, updated_at: new Date().toISOString() }).eq("id", request.id).eq("status", "failed"); if (updateError) throw new Error(updateError.message); const product = Array.isArray(request.products) ? request.products[0] : request.products; productIds.set(request.product_id, product.name); }
+  for (const [productId, productName] of Array.from(productIds.entries())) { const delivery = await sendPendingRestockNotifications(productId, productName); sent += delivery.sent; }
+  return { success: true, attempted: eligible.length, sent, skipped };
 }
 
 export async function listAdminOrders() {

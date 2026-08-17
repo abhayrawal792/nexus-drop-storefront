@@ -2,6 +2,15 @@ export type AnalyticsOrder = { created_at: string; order_status: string };
 export type AnalyticsWishlistSave = { created_at: string; product_id?: string; products?: { id: string; name: string; price: number | string; images?: string[] } | Array<{ id: string; name: string; price: number | string; images?: string[] }> | null };
 export type AnalyticsRestockRequest = { created_at: string; requested_at?: string; sent_at?: string | null; status: string; product_id: string; profile_id?: string | null; products?: { id: string; name: string; price: number | string; images?: string[]; category_id?: string; categories?: { id: string; name: string; slug: string } | Array<{ id: string; name: string; slug: string }> | null } | Array<{ id: string; name: string; price: number | string; images?: string[]; category_id?: string; categories?: { id: string; name: string; slug: string } | Array<{ id: string; name: string; slug: string }> | null }> | null };
 export type AnalyticsOrderItem = { product_id: string; orders?: { user_id?: string | null; created_at: string; order_status: string } | Array<{ user_id?: string | null; created_at: string; order_status: string }> | null };
+export type RestockFailureType = "provider" | "invalid_recipient" | "temporary" | "unknown";
+
+export function classifyRestockFailure(error: string): RestockFailureType {
+  const normalized = error.toLowerCase();
+  if (normalized.includes("invalid") || normalized.includes("recipient") || normalized.includes("mailbox") || normalized.includes("422") || normalized.includes("400")) return "invalid_recipient";
+  if (normalized.includes("timeout") || normalized.includes("429") || normalized.includes("500") || normalized.includes("502") || normalized.includes("503")) return "temporary";
+  if (normalized.includes("bounce") || normalized.includes("undelivered") || normalized.includes("resend")) return "provider";
+  return "unknown";
+}
 
 export function filterAnalyticsByDateRange<T extends { created_at: string }>(rows: T[], from?: string, to?: string) {
   const fromMs = from ? new Date(`${from}T00:00:00.000Z`).getTime() : Number.NEGATIVE_INFINITY;
@@ -41,6 +50,10 @@ function requestConverted(request: AnalyticsRestockRequest, orderItems: Analytic
     const orderTime = new Date(order?.created_at ?? "").getTime();
     return Boolean(order && order.user_id === request.profile_id && order.order_status !== "cancelled" && orderTime >= sentAt && orderTime <= sentAt + attributionDays * 24 * 60 * 60 * 1000);
   });
+}
+
+export function buildRestockAttributionComparison(requests: AnalyticsRestockRequest[], orderItems: AnalyticsOrderItem[]) {
+  return [1, 7, 14, 30].map(days => { const sent = requests.filter(request => request.status === "sent"); const converted = sent.filter(request => requestConverted(request, orderItems, days)).length; return { days, label: `${days} day${days === 1 ? "" : "s"}`, sentAlerts: sent.length, convertedAlerts: converted, conversionRate: sent.length ? Number(((converted / sent.length) * 100).toFixed(1)) : 0 }; });
 }
 
 export function buildRestockAnalytics(requests: AnalyticsRestockRequest[], orderItems: AnalyticsOrderItem[], now = new Date(), attributionDays = 7) {

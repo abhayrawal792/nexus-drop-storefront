@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { buildAnalyticsCsv } from "../client/src/lib/analyticsExport";
-import { buildAdminAnalytics, buildRestockAnalytics, filterAnalyticsByDateRange } from "./analyticsFeatures";
+import { buildAdminAnalytics, buildRestockAnalytics, buildRestockAttributionComparison, classifyRestockFailure, filterAnalyticsByDateRange } from "./analyticsFeatures";
 
 describe("admin analytics aggregation", () => {
   it("calculates six-month order conversion and wishlist saves from real timestamps", () => {
@@ -35,6 +35,16 @@ describe("admin analytics aggregation", () => {
     expect(result.convertedAlerts).toBe(1);
     expect(result.conversionRate).toBe(100);
     expect(result.topRestockProducts[0]).toMatchObject({ id: "p1", signups: 2, sent: 1, converted: 1 });
+  });
+
+  it("classifies delivery failures and builds comparison windows", () => {
+    expect(classifyRestockFailure("Resend 422: invalid recipient")).toBe("invalid_recipient");
+    expect(classifyRestockFailure("mailbox does not exist")).toBe("invalid_recipient");
+    expect(classifyRestockFailure("Resend 503: temporary failure")).toBe("temporary");
+    const requests = [{ created_at: "2026-08-04T00:00:00Z", status: "sent", product_id: "p1", profile_id: "profile-1", sent_at: "2026-08-05T00:00:00Z", products: { id: "p1", name: "Cuban Chain", price: 999 } }];
+    const orders = [{ product_id: "p1", orders: { user_id: "profile-1", created_at: "2026-08-10T00:00:00Z", order_status: "confirmed" } }];
+    expect(buildRestockAttributionComparison(requests, orders).map(row => row.days)).toEqual([1, 7, 14, 30]);
+    expect(buildRestockAttributionComparison(requests, orders)[1].conversionRate).toBe(100);
   });
 
   it("respects the selected attribution window for post-email conversions", () => {
